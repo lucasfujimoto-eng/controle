@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_content = r'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -70,10 +70,10 @@
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-base md:text-lg font-bold text-white tracking-tight">Broadcast Ops • Checklists</h1>
             <button onclick="openDbConfigModal()" id="dbStatusBadge"
-              class="text-[11px] font-semibold px-2.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition inline-flex items-center gap-1.5"
-              title="Clique para configurar banco de dados na nuvem (Supabase) ou gerenciar IndexedDB local">
-              <span id="dbStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span id="dbStatusText">IndexedDB Local Ativo</span>
+              class="text-[11px] font-semibold px-2.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 transition inline-flex items-center gap-1.5"
+              title="Banco Supabase conectado + IndexedDB local">
+              <span id="dbStatusDot" class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+              <span id="dbStatusText">Conectando ao Supabase...</span>
             </button>
           </div>
           <p class="text-xs text-slate-400">
@@ -83,18 +83,24 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+        <button onclick="pullFromSupabaseManual(true)"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition"
+          title="Buscar atualizações mais recentes do Supabase agora">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+          </svg>
+          Sincronizar
+        </button>
+
         <button onclick="openDbConfigModal()"
           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/40 transition">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/>
-          </svg>
           Banco de Dados
         </button>
 
         <button onclick="downloadStandaloneHtml()"
           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition"
           title="Baixa este arquivo HTML já com todos os dados gravados dentro dele">
-          Salvar HTML Portátil
+          Salvar HTML
         </button>
 
         <button onclick="exportBackupJson()"
@@ -117,6 +123,18 @@
       </div>
     </div>
   </header>
+
+  <!-- ALERT BANNER IF SUPABASE TABLE NOT CREATED YET -->
+  <div id="supabaseSetupBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 md:px-6 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="text-amber-200">
+        <strong>Atenção (1º uso no Supabase):</strong> A tabela <code class="bg-black/40 px-1.5 py-0.5 rounded text-amber-300">broadcast_ops_store</code> ainda não foi criada no seu projeto Supabase. Os dados estão sendo salvos localmente no IndexedDB até você rodar o SQL.
+      </div>
+      <button onclick="openDbConfigModal()" class="px-3 py-1 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition">
+        Copiar SQL & Ativar Nuvem
+      </button>
+    </div>
+  </div>
 
   <!-- MAIN CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-6 space-y-5">
@@ -194,7 +212,7 @@
         </div>
 
         <div class="flex items-center gap-2 text-xs text-slate-400">
-          <span>Última gravação no banco:</span>
+          <span>Última movimentação:</span>
           <strong id="lastSyncLabel" class="text-slate-200 font-mono-time">—</strong>
         </div>
       </div>
@@ -410,47 +428,36 @@
     </div>
   </aside>
 
-  <!-- MODAL: CONFIGURAÇÃO DO BANCO DE DADOS (INDEXEDDB + SUPABASE CLOUD) -->
+  <!-- MODAL: CONFIGURAÇÃO DO BANCO DE DADOS (SUPABASE + INDEXEDDB) -->
   <div id="dbConfigModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
       <div class="flex items-start justify-between border-b border-slate-800 pb-3">
         <div>
-          <h3 class="text-base font-bold text-white">Banco de Dados & Sincronização</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Gerencie o banco local estruturado (IndexedDB) ou conecte um banco PostgreSQL na nuvem (Supabase) para compartilhar entre vários computadores.</p>
+          <h3 class="text-base font-bold text-white">Banco de Dados Supabase + IndexedDB Local</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Seu projeto Supabase já está pré-configurado abaixo.</p>
         </div>
         <button onclick="closeDbConfigModal()" class="text-slate-400 hover:text-white p-1">✕</button>
       </div>
 
-      <!-- CAMADA 1: BANCO LOCAL INDEXEDDB -->
-      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-2">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">1. Banco de Dados Local (IndexedDB) — Ativo</h4>
-          </div>
-          <span id="idbStatsLabel" class="text-[11px] font-mono-time text-slate-400">Conectado</span>
-        </div>
-        <p class="text-xs text-slate-300">
-          Todos os jogos, checklists, modelos de campeonato e histórico são gravados automaticamente em tabelas estruturadas no <strong>IndexedDB</strong> do seu navegador (capacidade dezenas de vezes maior que o localStorage).
-        </p>
-      </div>
-
-      <!-- CAMADA 2: BANCO NA NUVEM (SUPABASE POSTGRESQL) -->
+      <!-- STATUS SUPABASE -->
       <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span id="cloudDotIndicator" class="w-2 h-2 rounded-full bg-slate-500"></span>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. Banco de Dados na Nuvem (Supabase / PostgreSQL) — Opcional</h4>
+            <span id="cloudDotIndicator" class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400">Conexão Supabase (PostgreSQL)</h4>
           </div>
-          <span id="cloudStatusLabel" class="text-[11px] font-semibold text-slate-400">Desconectado (somente local)</span>
+          <span id="cloudStatusLabel" class="text-[11px] font-semibold text-sky-400">Configurado</span>
         </div>
-        <p class="text-xs text-slate-300">
-          Quer acessar e editar os mesmos checklists em tempo real de qualquer computador ou celular da equipe? Crie um projeto gratuito no <a href="https://supabase.com" target="_blank" class="text-sky-400 underline">supabase.com</a>, rode o SQL abaixo uma única vez e cole a URL e a Anon Key aqui.
-        </p>
 
-        <details class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs">
-          <summary class="cursor-pointer font-semibold text-amber-300 select-none">Ver SQL para criar a tabela no Supabase (1 clique)</summary>
-          <pre class="mt-2 p-2.5 bg-black/50 rounded text-[11px] font-mono-time text-slate-300 overflow-x-auto select-all">create table if not exists public.broadcast_ops_store (
+        <div class="bg-slate-950 border border-amber-500/30 rounded-lg p-3 text-xs space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="font-semibold text-amber-300">Passo único no painel do Supabase (SQL Editor):</span>
+            <button type="button" onclick="copySupabaseSql()" class="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-semibold">
+              Copiar SQL
+            </button>
+          </div>
+          <p class="text-[11px] text-slate-400">Abra o <strong>SQL Editor</strong> no seu painel do Supabase, cole o código abaixo e clique em <strong>Run</strong> para criar a tabela de armazenamento:</p>
+          <pre id="supabaseSqlCode" class="p-2.5 bg-black/60 rounded text-[11px] font-mono-time text-slate-200 overflow-x-auto select-all">create table if not exists public.broadcast_ops_store (
   id text primary key,
   payload jsonb not null,
   updated_at timestamptz default now()
@@ -463,36 +470,34 @@ on public.broadcast_ops_store
 for all
 using (true)
 with check (true);</pre>
-        </details>
+        </div>
 
         <div class="grid grid-cols-1 gap-3 pt-1">
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Project URL (Supabase)</label>
-            <input id="supabaseUrlInput" type="url" placeholder="https://seu-projeto.supabase.co"
-              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">SUPABASE_URL</label>
+            <input id="supabaseUrlInput" type="url"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-sky-500" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Anon Public Key (Supabase)</label>
-            <input id="supabaseKeyInput" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">SUPABASE_PUBLISHABLE_KEY</label>
+            <input id="supabaseKeyInput" type="text"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-sky-500" />
           </div>
           <div>
-            <label class="block text-[11px] font-semibold text-slate-300 mb-1">ID da Base / Equipe (para separar ambientes se quiser)</label>
-            <input id="supabaseRoomInput" type="text" value="grade_principal" placeholder="grade_principal"
-              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">ID da Base / Equipe</label>
+            <input id="supabaseRoomInput" type="text"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-sky-500" />
           </div>
         </div>
 
         <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
-          <button type="button" onclick="disconnectSupabase()" class="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-rose-400 bg-slate-800 border border-slate-700">
-            Desconectar Nuvem
-          </button>
+          <span id="idbStatsLabel" class="text-[11px] font-mono-time text-slate-400">IndexedDB ativo</span>
           <div class="flex items-center gap-2">
-            <button type="button" onclick="pullFromSupabaseManual()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30">
+            <button type="button" onclick="pullFromSupabaseManual(true)" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30">
               ↓ Puxar da Nuvem
             </button>
             <button type="button" onclick="connectAndSyncSupabase()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-950/50">
-              Conectar e Sincronizar Agora
+              Testar & Enviar para Nuvem
             </button>
           </div>
         </div>
@@ -619,14 +624,18 @@ with check (true);</pre>
 
   <script>
     // =========================================================
-    // CAMADA DE BANCO DE DADOS: INDEXEDDB + SUPABASE CLOUD SYNC
+    // CONFIGURAÇÃO SUPABASE PRÉ-CONECTADA + INDEXEDDB LOCAL
     // =========================================================
+    const DEFAULT_SUPABASE_URL = 'https://wiqfqpdbsnqevmibudnr.supabase.co';
+    const DEFAULT_SUPABASE_KEY = 'sb_publishable_LId4BE54tv4OBnsLiJAlGg_JrawXWws';
+    const DEFAULT_ROOM_ID = 'grade_principal';
+
     const IDB_NAME = 'BroadcastOpsDatabase';
     const IDB_VERSION = 1;
     const IDB_STORE = 'app_records';
     const IDB_RECORD_KEY = 'main_state';
-    const LEGACY_LS_KEY = 'broadcast_ops_manual_v6';
-    const CLOUD_CFG_KEY = 'broadcast_ops_cloud_cfg_v1';
+    const LEGACY_LS_KEY = 'broadcast_ops_manual_v7';
+    const CLOUD_CFG_KEY = 'broadcast_ops_cloud_cfg_v2';
 
     const DEFAULT_BLOCKED_KEYWORDS = [
       'show da bundesliga',
@@ -689,9 +698,9 @@ with check (true);</pre>
     };
 
     let cloudConfig = {
-      url: '',
-      anonKey: '',
-      roomId: 'grade_principal'
+      url: DEFAULT_SUPABASE_URL,
+      anonKey: DEFAULT_SUPABASE_KEY,
+      roomId: DEFAULT_ROOM_ID
     };
 
     let idbInstance = null;
@@ -749,56 +758,41 @@ with check (true);</pre>
     }
 
     // =========================================================
-    // SUPABASE CLOUD SYNC (OPCIONAL)
+    // SUPABASE CLOUD SYNC
     // =========================================================
     function loadCloudConfig() {
       try {
         const raw = localStorage.getItem(CLOUD_CFG_KEY);
         if (raw) {
-          cloudConfig = { ...cloudConfig, ...JSON.parse(raw) };
+          const parsed = JSON.parse(raw);
+          cloudConfig = {
+            url: parsed.url || DEFAULT_SUPABASE_URL,
+            anonKey: parsed.anonKey || DEFAULT_SUPABASE_KEY,
+            roomId: parsed.roomId || DEFAULT_ROOM_ID
+          };
         }
       } catch (e) {}
-      updateCloudStatusUI();
     }
 
     function saveCloudConfig() {
       localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cloudConfig));
-      updateCloudStatusUI();
     }
 
     function isCloudConnected() {
       return Boolean(cloudConfig.url && cloudConfig.anonKey);
     }
 
-    function updateCloudStatusUI() {
-      const badgeText = document.getElementById('dbStatusText');
-      const badgeDot = document.getElementById('dbStatusDot');
-      const cloudDot = document.getElementById('cloudDotIndicator');
-      const cloudLabel = document.getElementById('cloudStatusLabel');
-
-      if (isCloudConnected()) {
-        if (badgeText) badgeText.textContent = `Banco Nuvem + IndexedDB (${cloudConfig.roomId || 'grade_principal'})`;
-        if (badgeDot) badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse';
-        if (cloudDot) cloudDot.className = 'w-2 h-2 rounded-full bg-sky-400';
-        if (cloudLabel) {
-          cloudLabel.textContent = 'Conectado ao Supabase';
-          cloudLabel.className = 'text-[11px] font-semibold text-sky-400';
-        }
-      } else {
-        if (badgeText) badgeText.textContent = 'IndexedDB Local Ativo';
-        if (badgeDot) badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
-        if (cloudDot) cloudDot.className = 'w-2 h-2 rounded-full bg-slate-500';
-        if (cloudLabel) {
-          cloudLabel.textContent = 'Desconectado (somente local)';
-          cloudLabel.className = 'text-[11px] font-semibold text-slate-400';
-        }
+    function setCloudBannerVisible(visible) {
+      const banner = document.getElementById('supabaseSetupBanner');
+      if (banner) {
+        banner.classList.toggle('hidden', !visible);
       }
     }
 
     async function pushToSupabase(stateObj) {
       if (!isCloudConnected()) return false;
       const baseUrl = cloudConfig.url.replace(/\/$/, '');
-      const room = encodeURIComponent(cloudConfig.roomId || 'grade_principal');
+      const room = encodeURIComponent(cloudConfig.roomId || DEFAULT_ROOM_ID);
       const resp = await fetch(`${baseUrl}/rest/v1/broadcast_ops_store?on_conflict=id`, {
         method: 'POST',
         headers: {
@@ -817,13 +811,14 @@ with check (true);</pre>
         const errTxt = await resp.text();
         throw new Error(`Supabase (${resp.status}): ${errTxt}`);
       }
+      setCloudBannerVisible(false);
       return true;
     }
 
     async function fetchFromSupabase() {
       if (!isCloudConnected()) return null;
       const baseUrl = cloudConfig.url.replace(/\/$/, '');
-      const room = encodeURIComponent(cloudConfig.roomId || 'grade_principal');
+      const room = encodeURIComponent(cloudConfig.roomId || DEFAULT_ROOM_ID);
       const resp = await fetch(`${baseUrl}/rest/v1/broadcast_ops_store?id=eq.${room}&select=payload`, {
         method: 'GET',
         headers: {
@@ -835,6 +830,7 @@ with check (true);</pre>
         const errTxt = await resp.text();
         throw new Error(`Supabase (${resp.status}): ${errTxt}`);
       }
+      setCloudBannerVisible(false);
       const rows = await resp.json();
       if (Array.isArray(rows) && rows.length > 0 && rows[0].payload) {
         return rows[0].payload;
@@ -845,10 +841,10 @@ with check (true);</pre>
     async function connectAndSyncSupabase() {
       const url = document.getElementById('supabaseUrlInput').value.trim();
       const anonKey = document.getElementById('supabaseKeyInput').value.trim();
-      const roomId = document.getElementById('supabaseRoomInput').value.trim() || 'grade_principal';
+      const roomId = document.getElementById('supabaseRoomInput').value.trim() || DEFAULT_ROOM_ID;
 
       if (!url || !anonKey) {
-        alert('Preencha a Project URL e a Anon Public Key do Supabase.');
+        alert('Preencha a SUPABASE_URL e a SUPABASE_PUBLISHABLE_KEY.');
         return;
       }
 
@@ -861,50 +857,73 @@ with check (true);</pre>
           appState = { ...appState, ...remoteState };
           await idbWriteState(appState);
           refreshAllUI();
-          alert('Conectado com sucesso! Dados mais recentes da nuvem foram carregados.');
+          updateBadgeStatus('✓ Sincronizado com Supabase', 'sky');
+          alert('Conectado! Os dados mais recentes do Supabase foram carregados.');
         } else {
           await pushToSupabase(appState);
-          alert('Conectado com sucesso! Seus dados locais foram enviados para o banco na nuvem.');
+          updateBadgeStatus('✓ Enviado ao Supabase', 'sky');
+          alert('Conectado com sucesso! Seus dados foram salvos no Supabase.');
         }
       } catch (err) {
-        alert('Erro ao conectar no Supabase. Verifique a URL, a Key e se a tabela broadcast_ops_store foi criada:\n\n' + err.message);
+        setCloudBannerVisible(true);
+        alert('Ainda não foi possível gravar na tabela broadcast_ops_store.\n\nCertifique-se de ter executado o SQL no painel do Supabase:\n' + err.message);
       }
     }
 
-    async function pullFromSupabaseManual() {
-      if (!isCloudConnected()) {
-        alert('Configure a URL e a Key do Supabase primeiro.');
-        return;
-      }
+    async function pullFromSupabaseManual(showFeedback = false) {
       try {
         const remoteState = await fetchFromSupabase();
+        const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         if (!remoteState) {
-          alert('Nenhum registro encontrado na nuvem para este ID de Base ainda.');
+          await pushToSupabase(appState);
+          updateBadgeStatus(`✓ Supabase Ativo (${timeStr})`, 'sky');
+          if (showFeedback) alert('Base inicializada no Supabase com os dados atuais!');
           return;
         }
-        appState = { ...appState, ...remoteState };
-        await idbWriteState(appState);
-        refreshAllUI();
-        alert('Dados atualizados a partir do banco na nuvem!');
+        if ((remoteState.savedRevision || 0) >= (appState.savedRevision || 0)) {
+          appState = { ...appState, ...remoteState };
+          await idbWriteState(appState);
+          refreshAllUI();
+        }
+        updateBadgeStatus(`✓ Supabase Sincronizado (${timeStr})`, 'sky');
+        if (showFeedback) alert('Dados atualizados a partir do Supabase!');
       } catch (err) {
-        alert('Falha ao buscar dados da nuvem: ' + err.message);
+        setCloudBannerVisible(true);
+        updateBadgeStatus('⚠ IndexedDB Local (Criar tabela SQL)', 'amber');
+        if (showFeedback) {
+          alert('Erro ao sincronizar com Supabase (verifique se o SQL da tabela foi rodado):\n\n' + err.message);
+        }
       }
     }
 
-    function disconnectSupabase() {
-      cloudConfig = { url: '', anonKey: '', roomId: 'grade_principal' };
-      saveCloudConfig();
-      document.getElementById('supabaseUrlInput').value = '';
-      document.getElementById('supabaseKeyInput').value = '';
-      alert('Banco na nuvem desconectado. O sistema continua salvando normalmente no IndexedDB local.');
+    function updateBadgeStatus(text, tone = 'sky') {
+      const badge = document.getElementById('dbStatusBadge');
+      const badgeText = document.getElementById('dbStatusText');
+      const badgeDot = document.getElementById('dbStatusDot');
+      if (!badge || !badgeText || !badgeDot) return;
+
+      badgeText.textContent = text;
+      if (tone === 'amber') {
+        badge.className = 'text-[11px] font-semibold px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition inline-flex items-center gap-1.5';
+        badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+      } else {
+        badge.className = 'text-[11px] font-semibold px-2.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 transition inline-flex items-center gap-1.5';
+        badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-sky-400';
+      }
+    }
+
+    function copySupabaseSql() {
+      const sql = document.getElementById('supabaseSqlCode').textContent;
+      navigator.clipboard.writeText(sql).then(() => {
+        alert('SQL copiado! Cole no SQL Editor do Supabase e clique em Run.');
+      });
     }
 
     function openDbConfigModal() {
       document.getElementById('supabaseUrlInput').value = cloudConfig.url || '';
       document.getElementById('supabaseKeyInput').value = cloudConfig.anonKey || '';
-      document.getElementById('supabaseRoomInput').value = cloudConfig.roomId || 'grade_principal';
-      document.getElementById('idbStatsLabel').textContent = `${appState.games.length} jogos • ${appState.auditLogs.length} logs`;
-      updateCloudStatusUI();
+      document.getElementById('supabaseRoomInput').value = cloudConfig.roomId || DEFAULT_ROOM_ID;
+      document.getElementById('idbStatsLabel').textContent = `IndexedDB local: ${appState.games.length} jogos • ${appState.auditLogs.length} logs`;
 
       const modal = document.getElementById('dbConfigModal');
       modal.classList.remove('hidden');
@@ -918,33 +937,29 @@ with check (true);</pre>
     }
 
     // =========================================================
-    // PERSISTÊNCIA UNIFICADA (INDEXEDDB + CLOUD + FALLBACK)
+    // PERSISTÊNCIA UNIFICADA (INDEXEDDB + SUPABASE + FALLBACK)
     // =========================================================
     async function saveState() {
       appState.savedRevision = (appState.savedRevision || 0) + 1;
       try {
         await idbWriteState(appState);
-      } catch (e) {
-        console.warn('Fallback localStorage:', e);
-      }
+      } catch (e) {}
       try {
         localStorage.setItem(LEGACY_LS_KEY, JSON.stringify(appState));
       } catch (e) {}
 
       const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const badgeText = document.getElementById('dbStatusText');
 
       if (isCloudConnected()) {
-        if (badgeText) badgeText.textContent = 'Sincronizando nuvem...';
+        updateBadgeStatus('Salvando no Supabase...', 'sky');
         pushToSupabase(appState)
           .then(() => {
-            if (badgeText) badgeText.textContent = `✓ Nuvem + IndexedDB (${timeStr})`;
+            updateBadgeStatus(`✓ Supabase + IndexedDB (${timeStr})`, 'sky');
           })
           .catch(() => {
-            if (badgeText) badgeText.textContent = `⚠ Salvo local • Erro nuvem (${timeStr})`;
+            setCloudBannerVisible(true);
+            updateBadgeStatus(`⚠ Salvo local • Criar tabela SQL (${timeStr})`, 'amber');
           });
-      } else {
-        if (badgeText) badgeText.textContent = `✓ IndexedDB Salvo (${timeStr})`;
       }
     }
 
@@ -953,9 +968,7 @@ with check (true);</pre>
 
       try {
         await openIndexedDB();
-      } catch (e) {
-        console.warn('IndexedDB indisponível, usando localStorage:', e);
-      }
+      } catch (e) {}
 
       let embedded = null;
       const embeddedEl = document.getElementById('embeddedStateData');
@@ -973,16 +986,29 @@ with check (true);</pre>
       } catch (e) {}
 
       let cloudData = null;
+      let cloudReachable = false;
       if (isCloudConnected()) {
-        try { cloudData = await fetchFromSupabase(); } catch (e) {}
+        try {
+          cloudData = await fetchFromSupabase();
+          cloudReachable = true;
+        } catch (e) {
+          setCloudBannerVisible(true);
+          updateBadgeStatus('⚠ IndexedDB Local (Criar tabela SQL)', 'amber');
+        }
       }
 
-      // Escolhe a fonte com maior savedRevision
       const candidates = [embedded, idbData, lsData, cloudData].filter(Boolean);
       if (candidates.length > 0) {
         candidates.sort((a, b) => (b.savedRevision || 0) - (a.savedRevision || 0));
         appState = { ...appState, ...candidates[0] };
         await idbWriteState(appState);
+        if (cloudReachable) {
+          const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          if (!cloudData || (appState.savedRevision || 0) > (cloudData.savedRevision || 0)) {
+            await pushToSupabase(appState);
+          }
+          updateBadgeStatus(`✓ Supabase + IndexedDB (${timeStr})`, 'sky');
+        }
         return;
       }
 
@@ -1043,7 +1069,7 @@ with check (true);</pre>
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `checklist-transmissoes-db-${new Date().toISOString().slice(0, 10)}.html`;
+      a.download = `checklist-transmissoes-supabase-${new Date().toISOString().slice(0, 10)}.html`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -2026,7 +2052,7 @@ with check (true);</pre>
       reader.readAsText(file);
     }
 
-    // Boot Assíncrono (IndexedDB + Cloud Sync)
+    // Boot Assíncrono (Supabase + IndexedDB)
     (async function initApp() {
       await loadState();
       refreshAllUI();
@@ -2034,3 +2060,9 @@ with check (true);</pre>
   </script>
 </body>
 </html>
+'''
+
+with open("checklist-transmissoes-supabase.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Arquivo checklist-transmissoes-supabase.html gerado com sucesso!")
