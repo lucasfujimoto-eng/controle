@@ -124,15 +124,20 @@
     </div>
   </header>
 
-  <!-- ALERT BANNER IF SUPABASE TABLE NOT CREATED YET -->
+  <!-- DIAGNOSTIC / ALERT BANNER ONLY IF REAL CONNECTION ERROR OCCURS -->
   <div id="supabaseSetupBanner" class="hidden bg-amber-500/10 border-b border-amber-500/30 px-4 md:px-6 py-2.5">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 text-xs">
       <div class="text-amber-200">
-        <strong>Atenção (1º uso no Supabase):</strong> A tabela <code class="bg-black/40 px-1.5 py-0.5 rounded text-amber-300">broadcast_ops_store</code> ainda não foi criada no seu projeto Supabase. Os dados estão sendo salvos localmente no IndexedDB até você rodar o SQL.
+        <strong>Aviso de Sincronização Supabase:</strong> <span id="supabaseErrorDetail">Não foi possível comunicar com a tabela broadcast_ops_store.</span>
       </div>
-      <button onclick="openDbConfigModal()" class="px-3 py-1 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition">
-        Copiar SQL & Ativar Nuvem
-      </button>
+      <div class="flex items-center gap-2">
+        <button onclick="retryCloudSyncNow()" class="px-3 py-1 rounded bg-emerald-500 text-slate-950 font-bold hover:bg-emerald-400 transition">
+          Tentar Novamente
+        </button>
+        <button onclick="openDbConfigModal()" class="px-3 py-1 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition">
+          Ver Diagnóstico & SQL
+        </button>
+      </div>
     </div>
   </div>
 
@@ -434,7 +439,7 @@
       <div class="flex items-start justify-between border-b border-slate-800 pb-3">
         <div>
           <h3 class="text-base font-bold text-white">Banco de Dados Supabase + IndexedDB Local</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Seu projeto Supabase já está pré-configurado abaixo.</p>
+          <p class="text-xs text-slate-400 mt-0.5">Gerencie a conexão com a tabela <code class="text-sky-300">public.broadcast_ops_store</code>.</p>
         </div>
         <button onclick="closeDbConfigModal()" class="text-slate-400 hover:text-white p-1">✕</button>
       </div>
@@ -446,18 +451,17 @@
             <span id="cloudDotIndicator" class="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
             <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400">Conexão Supabase (PostgreSQL)</h4>
           </div>
-          <span id="cloudStatusLabel" class="text-[11px] font-semibold text-sky-400">Configurado</span>
+          <span id="cloudStatusLabel" class="text-[11px] font-semibold text-sky-400">Ativo</span>
         </div>
 
-        <div class="bg-slate-950 border border-amber-500/30 rounded-lg p-3 text-xs space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-semibold text-amber-300">Passo único no painel do Supabase (SQL Editor):</span>
-            <button type="button" onclick="copySupabaseSql()" class="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[11px] font-semibold">
-              Copiar SQL
-            </button>
-          </div>
-          <p class="text-[11px] text-slate-400">Abra o <strong>SQL Editor</strong> no seu painel do Supabase, cole o código abaixo e clique em <strong>Run</strong> para criar a tabela de armazenamento:</p>
-          <pre id="supabaseSqlCode" class="p-2.5 bg-black/60 rounded text-[11px] font-mono-time text-slate-200 overflow-x-auto select-all">create table if not exists public.broadcast_ops_store (
+        <div id="diagnosticResultBox" class="hidden bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono-time text-slate-300"></div>
+
+        <details class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs">
+          <summary class="cursor-pointer font-semibold text-slate-300 select-none flex items-center justify-between">
+            <span>SQL de referência da tabela & permissões RLS (caso precise revisar)</span>
+            <button type="button" onclick="copySupabaseSql()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px]">Copiar SQL</button>
+          </summary>
+          <pre id="supabaseSqlCode" class="mt-2 p-2.5 bg-black/60 rounded text-[11px] font-mono-time text-slate-200 overflow-x-auto select-all">create table if not exists public.broadcast_ops_store (
   id text primary key,
   payload jsonb not null,
   updated_at timestamptz default now()
@@ -465,12 +469,17 @@
 
 alter table public.broadcast_ops_store enable row level security;
 
+drop policy if exists "Acesso publico broadcast_ops" on public.broadcast_ops_store;
 create policy "Acesso publico broadcast_ops"
 on public.broadcast_ops_store
 for all
+to anon, authenticated
 using (true)
-with check (true);</pre>
-        </div>
+with check (true);
+
+grant all on table public.broadcast_ops_store to anon, authenticated;
+notify pgrst, 'reload schema';</pre>
+        </details>
 
         <div class="grid grid-cols-1 gap-3 pt-1">
           <div>
@@ -624,7 +633,7 @@ with check (true);</pre>
 
   <script>
     // =========================================================
-    // CONFIGURAÇÃO SUPABASE PRÉ-CONECTADA + INDEXEDDB LOCAL
+    // CONFIGURAÇÃO SUPABASE + INDEXEDDB LOCAL
     // =========================================================
     const DEFAULT_SUPABASE_URL = 'https://wiqfqpdbsnqevmibudnr.supabase.co';
     const DEFAULT_SUPABASE_KEY = 'sb_publishable_LId4BE54tv4OBnsLiJAlGg_JrawXWws';
@@ -634,8 +643,8 @@ with check (true);</pre>
     const IDB_VERSION = 1;
     const IDB_STORE = 'app_records';
     const IDB_RECORD_KEY = 'main_state';
-    const LEGACY_LS_KEY = 'broadcast_ops_manual_v7';
-    const CLOUD_CFG_KEY = 'broadcast_ops_cloud_cfg_v2';
+    const LEGACY_LS_KEY = 'broadcast_ops_manual_v8';
+    const CLOUD_CFG_KEY = 'broadcast_ops_cloud_cfg_v3';
 
     const DEFAULT_BLOCKED_KEYWORDS = [
       'show da bundesliga',
@@ -758,7 +767,7 @@ with check (true);</pre>
     }
 
     // =========================================================
-    // SUPABASE CLOUD SYNC
+    // SUPABASE CLOUD SYNC (SEM BANNER DE 1º USO POR PADRÃO)
     // =========================================================
     function loadCloudConfig() {
       try {
@@ -782,10 +791,39 @@ with check (true);</pre>
       return Boolean(cloudConfig.url && cloudConfig.anonKey);
     }
 
-    function setCloudBannerVisible(visible) {
+    function buildSupabaseHeaders(extra = {}) {
+      const key = cloudConfig.anonKey;
+      const headers = {
+        'apikey': key,
+        'Content-Type': 'application/json',
+        ...extra
+      };
+      // Chaves JWT antigas (eyJ...) usam Bearer; chaves novas sb_publishable_ usam apikey
+      if (key.startsWith('eyJ')) {
+        headers['Authorization'] = `Bearer ${key}`;
+      }
+      return headers;
+    }
+
+    function showCloudErrorBanner(errMsg) {
       const banner = document.getElementById('supabaseSetupBanner');
-      if (banner) {
-        banner.classList.toggle('hidden', !visible);
+      const detail = document.getElementById('supabaseErrorDetail');
+      const diagBox = document.getElementById('diagnosticResultBox');
+      if (detail) detail.textContent = errMsg;
+      if (diagBox) {
+        diagBox.textContent = 'Último retorno Supabase: ' + errMsg;
+        diagBox.classList.remove('hidden');
+      }
+      if (banner) banner.classList.remove('hidden');
+    }
+
+    function hideCloudErrorBanner() {
+      const banner = document.getElementById('supabaseSetupBanner');
+      const diagBox = document.getElementById('diagnosticResultBox');
+      if (banner) banner.classList.add('hidden');
+      if (diagBox) {
+        diagBox.textContent = '✓ Conexão e leitura/escrita na tabela public.broadcast_ops_store funcionando perfeitamente.';
+        diagBox.classList.remove('hidden');
       }
     }
 
@@ -795,12 +833,9 @@ with check (true);</pre>
       const room = encodeURIComponent(cloudConfig.roomId || DEFAULT_ROOM_ID);
       const resp = await fetch(`${baseUrl}/rest/v1/broadcast_ops_store?on_conflict=id`, {
         method: 'POST',
-        headers: {
-          'apikey': cloudConfig.anonKey,
-          'Authorization': `Bearer ${cloudConfig.anonKey}`,
-          'Content-Type': 'application/json',
+        headers: buildSupabaseHeaders({
           'Prefer': 'resolution=merge-duplicates,return=minimal'
-        },
+        }),
         body: JSON.stringify({
           id: decodeURIComponent(room),
           payload: stateObj,
@@ -809,9 +844,9 @@ with check (true);</pre>
       });
       if (!resp.ok) {
         const errTxt = await resp.text();
-        throw new Error(`Supabase (${resp.status}): ${errTxt}`);
+        throw new Error(`HTTP ${resp.status}: ${errTxt}`);
       }
-      setCloudBannerVisible(false);
+      hideCloudErrorBanner();
       return true;
     }
 
@@ -821,21 +856,22 @@ with check (true);</pre>
       const room = encodeURIComponent(cloudConfig.roomId || DEFAULT_ROOM_ID);
       const resp = await fetch(`${baseUrl}/rest/v1/broadcast_ops_store?id=eq.${room}&select=payload`, {
         method: 'GET',
-        headers: {
-          'apikey': cloudConfig.anonKey,
-          'Authorization': `Bearer ${cloudConfig.anonKey}`
-        }
+        headers: buildSupabaseHeaders()
       });
       if (!resp.ok) {
         const errTxt = await resp.text();
-        throw new Error(`Supabase (${resp.status}): ${errTxt}`);
+        throw new Error(`HTTP ${resp.status}: ${errTxt}`);
       }
-      setCloudBannerVisible(false);
+      hideCloudErrorBanner();
       const rows = await resp.json();
       if (Array.isArray(rows) && rows.length > 0 && rows[0].payload) {
         return rows[0].payload;
       }
       return null;
+    }
+
+    async function retryCloudSyncNow() {
+      await pullFromSupabaseManual(true);
     }
 
     async function connectAndSyncSupabase() {
@@ -853,20 +889,22 @@ with check (true);</pre>
 
       try {
         const remoteState = await fetchFromSupabase();
+        const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         if (remoteState && (remoteState.savedRevision || 0) > (appState.savedRevision || 0)) {
           appState = { ...appState, ...remoteState };
           await idbWriteState(appState);
           refreshAllUI();
-          updateBadgeStatus('✓ Sincronizado com Supabase', 'sky');
+          updateBadgeStatus(`✓ Supabase Sincronizado (${timeStr})`, 'sky');
           alert('Conectado! Os dados mais recentes do Supabase foram carregados.');
         } else {
           await pushToSupabase(appState);
-          updateBadgeStatus('✓ Enviado ao Supabase', 'sky');
-          alert('Conectado com sucesso! Seus dados foram salvos no Supabase.');
+          updateBadgeStatus(`✓ Supabase + IndexedDB (${timeStr})`, 'sky');
+          alert('Conectado com sucesso! Seus dados foram gravados na tabela broadcast_ops_store do Supabase.');
         }
       } catch (err) {
-        setCloudBannerVisible(true);
-        alert('Ainda não foi possível gravar na tabela broadcast_ops_store.\n\nCertifique-se de ter executado o SQL no painel do Supabase:\n' + err.message);
+        showCloudErrorBanner(err.message);
+        updateBadgeStatus('⚠ Falha na nuvem • Salvo no IndexedDB', 'amber');
+        alert('Retorno do Supabase:\n' + err.message + '\n\nDica: Se aparecer erro de permissão (RLS) ou schema cache, rode o SQL atualizado dentro da janela Banco de Dados.');
       }
     }
 
@@ -877,21 +915,23 @@ with check (true);</pre>
         if (!remoteState) {
           await pushToSupabase(appState);
           updateBadgeStatus(`✓ Supabase Ativo (${timeStr})`, 'sky');
-          if (showFeedback) alert('Base inicializada no Supabase com os dados atuais!');
+          if (showFeedback) alert('Conexão confirmada! Dados iniciais gravados no Supabase.');
           return;
         }
         if ((remoteState.savedRevision || 0) >= (appState.savedRevision || 0)) {
           appState = { ...appState, ...remoteState };
           await idbWriteState(appState);
           refreshAllUI();
+        } else {
+          await pushToSupabase(appState);
         }
-        updateBadgeStatus(`✓ Supabase Sincronizado (${timeStr})`, 'sky');
-        if (showFeedback) alert('Dados atualizados a partir do Supabase!');
+        updateBadgeStatus(`✓ Supabase + IndexedDB (${timeStr})`, 'sky');
+        if (showFeedback) alert('Sincronizado com sucesso com o Supabase!');
       } catch (err) {
-        setCloudBannerVisible(true);
-        updateBadgeStatus('⚠ IndexedDB Local (Criar tabela SQL)', 'amber');
+        showCloudErrorBanner(err.message);
+        updateBadgeStatus('⚠ Falha na nuvem • Salvo no IndexedDB', 'amber');
         if (showFeedback) {
-          alert('Erro ao sincronizar com Supabase (verifique se o SQL da tabela foi rodado):\n\n' + err.message);
+          alert('Erro ao sincronizar com Supabase:\n\n' + err.message);
         }
       }
     }
@@ -900,15 +940,21 @@ with check (true);</pre>
       const badge = document.getElementById('dbStatusBadge');
       const badgeText = document.getElementById('dbStatusText');
       const badgeDot = document.getElementById('dbStatusDot');
+      const cloudLabel = document.getElementById('cloudStatusLabel');
+      const cloudDot = document.getElementById('cloudDotIndicator');
       if (!badge || !badgeText || !badgeDot) return;
 
       badgeText.textContent = text;
       if (tone === 'amber') {
         badge.className = 'text-[11px] font-semibold px-2.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 hover:bg-amber-500/25 transition inline-flex items-center gap-1.5';
         badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400';
+        if (cloudLabel) { cloudLabel.textContent = 'Verificar Permissão/Tabela'; cloudLabel.className = 'text-[11px] font-semibold text-amber-400'; }
+        if (cloudDot) cloudDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
       } else {
         badge.className = 'text-[11px] font-semibold px-2.5 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30 hover:bg-sky-500/25 transition inline-flex items-center gap-1.5';
         badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-sky-400';
+        if (cloudLabel) { cloudLabel.textContent = 'Conectado & Sincronizado'; cloudLabel.className = 'text-[11px] font-semibold text-emerald-400'; }
+        if (cloudDot) cloudDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
       }
     }
 
@@ -956,9 +1002,9 @@ with check (true);</pre>
           .then(() => {
             updateBadgeStatus(`✓ Supabase + IndexedDB (${timeStr})`, 'sky');
           })
-          .catch(() => {
-            setCloudBannerVisible(true);
-            updateBadgeStatus(`⚠ Salvo local • Criar tabela SQL (${timeStr})`, 'amber');
+          .catch((err) => {
+            showCloudErrorBanner(err.message);
+            updateBadgeStatus(`⚠ Salvo local • Erro nuvem (${timeStr})`, 'amber');
           });
       }
     }
@@ -991,9 +1037,9 @@ with check (true);</pre>
         try {
           cloudData = await fetchFromSupabase();
           cloudReachable = true;
-        } catch (e) {
-          setCloudBannerVisible(true);
-          updateBadgeStatus('⚠ IndexedDB Local (Criar tabela SQL)', 'amber');
+        } catch (err) {
+          showCloudErrorBanner(err.message);
+          updateBadgeStatus('⚠ Falha na nuvem • Salvo no IndexedDB', 'amber');
         }
       }
 
@@ -1052,12 +1098,14 @@ with check (true);</pre>
       const formModal = cloneDoc.querySelector('#gameFormModal');
       const filterModal = cloneDoc.querySelector('#filterRulesModal');
       const dbModal = cloneDoc.querySelector('#dbConfigModal');
+      const banner = cloneDoc.querySelector('#supabaseSetupBanner');
 
       if (drawer) { drawer.classList.add('hidden'); drawer.classList.remove('flex'); }
       if (backdrop) backdrop.classList.add('hidden');
       if (formModal) { formModal.classList.add('hidden'); formModal.classList.remove('flex'); }
       if (filterModal) { filterModal.classList.add('hidden'); filterModal.classList.remove('flex'); }
       if (dbModal) { dbModal.classList.add('hidden'); dbModal.classList.remove('flex'); }
+      if (banner) banner.classList.add('hidden');
 
       const dataScript = cloneDoc.querySelector('#embeddedStateData');
       if (dataScript) {
@@ -2062,7 +2110,7 @@ with check (true);</pre>
 </html>
 '''
 
-with open("checklist-transmissoes-supabase.html", "w", encoding="utf-8") as f:
+with open("checklist-transmissoes-supabase-v2.html", "w", encoding="utf-8") as f:
     f.write(html_content)
 
-print("Arquivo checklist-transmissoes-supabase.html gerado com sucesso!")
+print("Arquivo checklist-transmissoes-supabase-v2.html gerado com sucesso!")
