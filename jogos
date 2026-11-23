@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Broadcast Ops • Checklist de Transmissões Esportivas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #090d16;
+      color: #e2e8f0;
+    }
+    .font-mono-time {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .drawer-enter {
+      animation: slideInRight 0.22s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- TOP BAR -->
+  <header class="sticky top-0 z-30 bg-[#0d1322]/95 backdrop-blur border-b border-slate-800 px-4 md:px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-950/50 border border-emerald-400/20">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base md:text-lg font-bold text-white tracking-tight">Broadcast Ops • Checklists</h1>
+            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Cadastro Manual</span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Campos: <span class="text-slate-300 font-medium">Name • Event Date • Open Start • Broadcast • Kick Off • End Game</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button onclick="exportBackupJson()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+          title="Salvar cópia de segurança dos seus jogos, checklists e modelos">
+          <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+          </svg>
+          Backup
+        </button>
+
+        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
+          title="Restaurar arquivo de backup .json">
+          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+          </svg>
+          Restaurar
+          <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden" />
+        </label>
+
+        <button onclick="openGameFormModal()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-950/60 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          Novo Jogo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 md:px-6 py-6 space-y-5">
+
+    <!-- KPI & STATUS CARDS -->
+    <section class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div class="bg-[#111827] border border-slate-800/90 rounded-xl p-3.5">
+        <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Jogos Ativos</div>
+        <div class="mt-1 flex items-baseline justify-between">
+          <span id="statActiveGames" class="text-2xl font-bold text-white">0</span>
+          <span class="text-[11px] text-slate-400">na grade</span>
+        </div>
+      </div>
+
+      <div class="bg-[#111827] border border-slate-800/90 rounded-xl p-3.5">
+        <div class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Checklists Prontos</div>
+        <div class="mt-1 flex items-baseline justify-between">
+          <span id="statCompletedLists" class="text-2xl font-bold text-emerald-400">0</span>
+          <span id="statAvgProgress" class="text-[11px] text-emerald-400/80">0% concluído</span>
+        </div>
+      </div>
+
+      <div onclick="switchMainTab('audit', 'ADDED')" class="cursor-pointer bg-[#111827] hover:bg-slate-800/70 border border-slate-800/90 hover:border-emerald-500/40 rounded-xl p-3.5 transition">
+        <div class="text-[11px] font-medium text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+          <span>Inclusões</span>
+          <span class="text-[10px] bg-emerald-500/15 px-1.5 py-0.5 rounded">+ NOVO</span>
+        </div>
+        <div class="mt-1 flex items-baseline justify-between">
+          <span id="statAddedCount" class="text-2xl font-bold text-white">0</span>
+          <span class="text-[11px] text-slate-400">ver histórico →</span>
+        </div>
+      </div>
+
+      <div onclick="switchMainTab('audit', 'UPDATED')" class="cursor-pointer bg-[#111827] hover:bg-slate-800/70 border border-slate-800/90 hover:border-amber-500/40 rounded-xl p-3.5 transition">
+        <div class="text-[11px] font-medium text-amber-400 uppercase tracking-wider flex items-center justify-between">
+          <span>Alterações</span>
+          <span class="text-[10px] bg-amber-500/15 px-1.5 py-0.5 rounded">EDITADO</span>
+        </div>
+        <div class="mt-1 flex items-baseline justify-between">
+          <span id="statUpdatedCount" class="text-2xl font-bold text-white">0</span>
+          <span class="text-[11px] text-slate-400">ver campos →</span>
+        </div>
+      </div>
+
+      <div onclick="switchMainTab('audit', 'REMOVED')" class="col-span-2 lg:col-span-1 cursor-pointer bg-[#111827] hover:bg-slate-800/70 border border-slate-800/90 hover:border-rose-500/40 rounded-xl p-3.5 transition">
+        <div class="text-[11px] font-medium text-rose-400 uppercase tracking-wider flex items-center justify-between">
+          <span>Exclusões</span>
+          <span class="text-[10px] bg-rose-500/15 px-1.5 py-0.5 rounded">REMOVIDO</span>
+        </div>
+        <div class="mt-1 flex items-baseline justify-between">
+          <span id="statRemovedCount" class="text-2xl font-bold text-white">0</span>
+          <span class="text-[11px] text-slate-400">ver datas →</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAVIGATION TABS & FILTER BAR -->
+    <section class="bg-[#111827] border border-slate-800 rounded-xl p-3.5 space-y-3">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="tabBtnGames" onclick="switchMainTab('games')"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition">
+            Grade de Jogos & Checklists
+          </button>
+          <button id="tabBtnAudit" onclick="switchMainTab('audit')"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition inline-flex items-center gap-1.5">
+            Histórico de Inclusões, Alterações & Exclusões
+            <span id="badgeAuditTotal" class="px-1.5 py-0.5 text-[10px] rounded-full bg-slate-700 text-slate-200">0</span>
+          </button>
+          <button id="tabBtnTemplates" onclick="switchMainTab('templates')"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition inline-flex items-center gap-1.5">
+            Modelos por Campeonato
+            <span id="badgeTemplatesTotal" class="px-1.5 py-0.5 text-[10px] rounded-full bg-slate-700 text-slate-200">0</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <span>Última movimentação:</span>
+          <strong id="lastSyncLabel" class="text-slate-200 font-mono-time">—</strong>
+        </div>
+      </div>
+
+      <!-- FILTERS FOR GAMES VIEW -->
+      <div id="gamesFilterControls" class="flex flex-wrap items-center gap-2.5">
+        <div class="relative flex-1 min-w-[220px]">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+          </svg>
+          <input id="searchInput" type="text" oninput="renderGamesTable()" placeholder="Buscar partida, time ou campeonato..."
+            class="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+        </div>
+
+        <select id="leagueFilter" onchange="renderGamesTable()"
+          class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+          <option value="ALL">Todos os Campeonatos</option>
+        </select>
+
+        <select id="statusChangeFilter" onchange="renderGamesTable()"
+          class="bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+          <option value="ACTIVE">Somente Jogos Ativos</option>
+          <option value="ALL_WITH_REMOVED">Ativos + Excluídos</option>
+          <option value="NEW">Apenas Novos (Inclusões)</option>
+          <option value="UPDATED">Apenas Alterados</option>
+          <option value="REMOVED">Apenas Excluídos</option>
+        </select>
+
+        <button onclick="openFilterRulesModal()"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition inline-flex items-center gap-1.5"
+          title="Bloqueia cadastro de programas que não são jogos (ex: Show da Bundesliga)">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"/>
+          </svg>
+          Bloqueio de Shows (<span id="blockedKeywordsCount">0</span>)
+        </button>
+      </div>
+    </section>
+
+    <!-- VIEW 1: GAMES TABLE -->
+    <section id="viewGames" class="bg-[#111827] border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-900/90 border-b border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <th class="py-3 px-4">Name (Jogo de Futebol)</th>
+              <th class="py-3 px-3">Event Date</th>
+              <th class="py-3 px-3">Open Start</th>
+              <th class="py-3 px-3">Broadcast</th>
+              <th class="py-3 px-3">Kick Off</th>
+              <th class="py-3 px-3">End Game</th>
+              <th class="py-3 px-3">Inclusão / Exclusão</th>
+              <th class="py-3 px-3 text-right">Checklist</th>
+              <th class="py-3 px-4 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="gamesTableBody" class="divide-y divide-slate-800/80 text-xs">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div id="emptyGamesState" class="hidden py-12 px-4 text-center">
+        <p class="text-sm font-medium text-slate-300">Nenhum jogo encontrado na grade.</p>
+        <p class="text-xs text-slate-500 mt-1">Clique no botão <strong>+ Novo Jogo</strong> no topo para cadastrar uma partida manualmente.</p>
+      </div>
+    </section>
+
+    <!-- VIEW 2: AUDIT LOG (INCLUSÕES, ALTERAÇÕES, EXCLUSÕES) -->
+    <section id="viewAudit" class="hidden space-y-4">
+      <div class="bg-[#111827] border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="setAuditTypeFilter('ALL')" id="auditFilterALL" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-700 text-white">Todos</button>
+          <button onclick="setAuditTypeFilter('ADDED')" id="auditFilterADDED" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-emerald-400 hover:bg-slate-700">+ Inclusões</button>
+          <button onclick="setAuditTypeFilter('UPDATED')" id="auditFilterUPDATED" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-amber-400 hover:bg-slate-700">✎ Alterações</button>
+          <button onclick="setAuditTypeFilter('REMOVED')" id="auditFilterREMOVED" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-rose-400 hover:bg-slate-700">✕ Exclusões</button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input id="auditSearchInput" type="text" oninput="renderAuditLog()" placeholder="Filtrar histórico por jogo..."
+            class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+          <button onclick="clearAuditHistory()" class="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-rose-400 bg-slate-800/80 border border-slate-700">
+            Limpar Log
+          </button>
+        </div>
+      </div>
+
+      <div id="auditLogContainer" class="space-y-2.5">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- VIEW 3: CHAMPIONSHIP TEMPLATES -->
+    <section id="viewTemplates" class="hidden space-y-4">
+      <div class="bg-[#111827] border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-bold text-white">Modelos Salvos por Campeonato</h2>
+          <p class="text-xs text-slate-400">Crie ou edite modelos padrão (ex: Bundesliga, Serie A, Champions League) para aplicar automaticamente ou com 1 clique em qualquer partida.</p>
+        </div>
+        <button onclick="createNewTemplatePrompt()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white">
+          + Novo Modelo de Campeonato
+        </button>
+      </div>
+      <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CHECKLIST DRAWER (LATERAL) -->
+  <div id="checklistDrawerBackdrop" class="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs hidden" onclick="closeChecklistDrawer()"></div>
+  <aside id="checklistDrawer" class="fixed top-0 right-0 z-50 h-full w-full max-w-2xl bg-[#0f172a] border-l border-slate-800 shadow-2xl hidden flex-col drawer-enter">
+    <!-- Drawer Header -->
+    <div class="p-5 border-b border-slate-800 bg-[#0b1120]">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            <span id="drawerLeagueBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Campeonato</span>
+            <span id="drawerStatusBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400">Ativo</span>
+          </div>
+          <h2 id="drawerGameName" class="text-lg font-bold text-white leading-snug">Nome do Jogo</h2>
+          <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 font-mono-time">
+            <span>📅 <strong id="drawerEventDate" class="text-slate-200">—</strong></span>
+            <span>🟢 Open: <strong id="drawerOpenStart" class="text-slate-200">—</strong></span>
+            <span>📡 Broad: <strong id="drawerBroadcast" class="text-slate-200">—</strong></span>
+            <span>⚽ Kick: <strong id="drawerKickOff" class="text-emerald-400">—</strong></span>
+            <span>🏁 End: <strong id="drawerEndGame" class="text-slate-200">—</strong></span>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-3 text-[11px] text-slate-400">
+            <span>Incluído em: <strong id="drawerCreatedAt" class="text-slate-300">—</strong></span>
+            <span id="drawerUpdatedWrap" class="hidden">• Última alteração: <strong id="drawerUpdatedAt" class="text-amber-300">—</strong></span>
+            <span id="drawerRemovedWrap" class="hidden">• Excluído em: <strong id="drawerRemovedAt" class="text-rose-400">—</strong></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button onclick="openEditFromDrawer()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs font-medium border border-slate-700" title="Editar horários/dados do jogo">
+            ✎ Editar Jogo
+          </button>
+          <button onclick="closeChecklistDrawer()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mt-4">
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span class="text-slate-400 font-medium">Progresso do Checklist</span>
+          <span id="drawerProgressText" class="font-bold text-emerald-400">0/0 (0%)</span>
+        </div>
+        <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div id="drawerProgressBar" class="h-full bg-emerald-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Template & Clone Actions -->
+      <div class="mt-4 pt-3 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div class="flex gap-1">
+          <select id="applyTemplateSelect" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+            <option value="">Puxar modelo campeonato...</option>
+          </select>
+          <button onclick="applySelectedTemplate()" class="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold" title="Aplicar modelo">
+            Usar
+          </button>
+        </div>
+
+        <div class="flex gap-1">
+          <select id="cloneGameSelect" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200">
+            <option value="">Copiar de outro jogo...</option>
+          </select>
+          <button onclick="cloneFromSelectedGame()" class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold" title="Clonar checklist">
+            Copiar
+          </button>
+        </div>
+
+        <button onclick="saveCurrentChecklistAsTemplate()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition">
+          ★ Salvar como Modelo
+        </button>
+      </div>
+    </div>
+
+    <!-- Drawer Body: Checklist Items -->
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+      <!-- Add Topic Form -->
+      <form onsubmit="handleAddChecklistItem(event)" class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex flex-wrap sm:flex-nowrap gap-2">
+        <select id="newItemStage" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+          <option value="Pré-Open">Pré-Open</option>
+          <option value="Open Start">Open Start</option>
+          <option value="Broadcast">Broadcast</option>
+          <option value="Kick Off">Kick Off</option>
+          <option value="Intervalo">Intervalo</option>
+          <option value="End Game">End Game</option>
+        </select>
+        <input id="newItemText" type="text" required placeholder="Adicionar tópico ao checklist (ex: Conferir sinal limpo satélite, GC escalações...)"
+          class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500" />
+        <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold whitespace-nowrap">
+          + Adicionar
+        </button>
+      </form>
+
+      <!-- Items List -->
+      <div id="drawerChecklistContainer" class="space-y-3">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </aside>
+
+  <!-- MODAL: CRIAR / EDITAR EVENTO MANUAL (COM AS 6 COLUNAS DA PLANILHA) -->
+  <div id="gameFormModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 id="gameFormTitle" class="text-base font-bold text-white">Novo Jogo de Futebol</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Preencha exatamente as 6 colunas da grade de transmissão.</p>
+        </div>
+        <button onclick="closeGameFormModal()" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <form onsubmit="handleSaveManualGame(event)" class="space-y-4">
+        <input type="hidden" id="editingGameId" value="" />
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">
+            Name <span class="text-rose-400">*</span>
+            <span class="font-normal text-slate-500">(ex: Bundesliga: Bayern München x Borussia Dortmund)</span>
+          </label>
+          <input id="fieldName" type="text" required placeholder="Campeonato: Time A x Time B"
+            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500" />
+          <p class="text-[11px] text-slate-500 mt-1">Apenas jogos de futebol são aceitos (programas como <em>Show da Bundesliga</em> ou <em>Show do Italiano</em> são bloqueados).</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Event Date <span class="text-rose-400">*</span></label>
+            <input id="fieldEventDate" type="date" required
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-emerald-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Open Start</label>
+            <input id="fieldOpenStart" type="time"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-emerald-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Broadcast</label>
+            <input id="fieldBroadcast" type="time"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-emerald-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-emerald-400 mb-1">Kick Off <span class="text-rose-400">*</span></label>
+            <input id="fieldKickOff" type="time" required
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-emerald-500" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">End Game</label>
+            <input id="fieldEndGame" type="time"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white focus:outline-none focus:border-emerald-500" />
+          </div>
+
+          <div id="initialChecklistSourceWrap">
+            <label class="block text-xs font-semibold text-indigo-300 mb-1">Checklist Inicial (Opcional)</label>
+            <select id="fieldInitialTemplate"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500">
+              <option value="AUTO">Automático pelo Campeonato</option>
+              <option value="EMPTY">Começar em branco</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeGameFormModal()" class="px-4 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-950/50">
+            Salvar Jogo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: REGRAS DE BLOQUEIO DE SHOWS -->
+  <div id="filterRulesModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white">Bloqueio de Programas Não-Jogo</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Impede que programas como <strong>Show da Bundesliga</strong> ou <strong>Show do Italiano</strong> sejam cadastrados como partida.</p>
+        </div>
+        <button onclick="closeFilterRulesModal()" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <div class="flex gap-2">
+        <input id="newKeywordInput" type="text" placeholder="Ex: Compacto, Melhores Momentos..."
+          class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500" />
+        <button onclick="addBlockedKeyword()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">
+          Bloquear
+        </button>
+      </div>
+
+      <div id="keywordsListContainer" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-3 bg-slate-900 rounded-xl border border-slate-800">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closeFilterRulesModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white">
+          Concluir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================
+    // ESTADO E STORAGE
+    // =========================================================
+    const STORAGE_KEY = 'broadcast_ops_manual_v4';
+
+    const DEFAULT_BLOCKED_KEYWORDS = [
+      'show da bundesliga',
+      'show do italiano',
+      'show da serie a',
+      'show da la liga',
+      'show da premier',
+      'show da champions',
+      'show da libertadores',
+      'resenha',
+      'pré-jogo',
+      'pre-jogo',
+      'pós-jogo',
+      'pos-jogo',
+      'magazine',
+      'highlights',
+      'boletim'
+    ];
+
+    const DEFAULT_TEMPLATES = {
+      'Bundesliga': [
+        { stage: 'Pré-Open', text: 'Validar feed internacional DFL (Main + Backup)' },
+        { stage: 'Pré-Open', text: 'Conferir áudio ambiente estádio (5.1 / Estéreo) e trilha Bundesliga' },
+        { stage: 'Open Start', text: 'Abrir sinal 15 min antes e testar retorno com narrador/comentarista' },
+        { stage: 'Broadcast', text: 'Checar GC padrão Bundesliga e inserção de patrocinadores locais' },
+        { stage: 'Kick Off', text: 'Confirmar sincronismo de relógio oficial e placar limpo' },
+        { stage: 'End Game', text: 'Aguardar entrevistas flash interview e encerrar feed após créditos DFL' }
+      ],
+      'Serie A Italiana': [
+        { stage: 'Pré-Open', text: 'Receber sinal Lega Serie A e testar redundância SRT/Satélite' },
+        { stage: 'Open Start', text: 'Checar escalações oficiais e grafismo de formação tática' },
+        { stage: 'Broadcast', text: 'Validar vinheta de abertura Lega Serie A e áudios de cabine' },
+        { stage: 'Kick Off', text: 'Conferir cronômetro e áudio de torcida sem delay' },
+        { stage: 'End Game', text: 'Gravar compacto de gols e confirmar derrubada do satélite' }
+      ],
+      'Padrão Futebol': [
+        { stage: 'Pré-Open', text: 'Testar recepção de vídeo/áudio e sincronismo lab-sync' },
+        { stage: 'Open Start', text: 'Liberar sinal no switcher e testar comunicação IFB com equipe' },
+        { stage: 'Broadcast', text: 'Inserir tarjas de identificação e validar patrocinadores' },
+        { stage: 'Kick Off', text: 'Monitorar estabilidade do sinal no apito inicial' },
+        { stage: 'Intervalo', text: 'Rodar pacote de melhores momentos do 1º tempo' },
+        { stage: 'End Game', text: 'Encerrar transmissão e arquivar relatório de ocorrência' }
+      ]
+    };
+
+    const INITIAL_SAMPLE_GAMES = [
+      { name: 'Bundesliga: Bayern München x Borussia Dortmund', eventDate: '2026-11-28', openStart: '14:00', broadcast: '14:15', kickOff: '14:30', endGame: '16:30' },
+      { name: 'Serie A Italiana: Inter de Milão x Juventus', eventDate: '2026-11-28', openStart: '16:15', broadcast: '16:30', kickOff: '16:45', endGame: '18:45' },
+      { name: 'Bundesliga: Bayer Leverkusen x RB Leipzig', eventDate: '2026-11-29', openStart: '11:00', broadcast: '11:15', kickOff: '11:30', endGame: '13:30' },
+      { name: 'Serie A Italiana: Milan x Napoli', eventDate: '2026-11-29', openStart: '16:15', broadcast: '16:30', kickOff: '16:45', endGame: '18:45' }
+    ];
+
+    let appState = {
+      games: [],
+      auditLogs: [],
+      templates: JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
+      blockedKeywords: [...DEFAULT_BLOCKED_KEYWORDS],
+      lastMovement: null
+    };
+
+    let selectedGameId = null;
+    let currentMainTab = 'games';
+    let currentAuditFilter = 'ALL';
+
+    // =========================================================
+    // UTILITÁRIOS
+    // =========================================================
+    function nowFormatted() {
+      const d = new Date();
+      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    function detectLeague(name) {
+      const n = (name || '').toLowerCase();
+      if (n.includes('bundesliga')) return 'Bundesliga';
+      if (n.includes('italiano') || n.includes('serie a')) return 'Serie A Italiana';
+      if (n.includes('champions')) return 'Champions League';
+      if (n.includes('premier')) return 'Premier League';
+      if (n.includes('la liga') || n.includes('laliga')) return 'La Liga';
+      if (n.includes('libertadores')) return 'Libertadores';
+      if (n.includes('brasileir')) return 'Brasileirão';
+      if (name && name.includes(':')) {
+        return name.split(':')[0].trim();
+      }
+      return 'Padrão Futebol';
+    }
+
+    function validateFootballMatchName(name) {
+      const lower = (name || '').toLowerCase().trim();
+      if (!lower) return { ok: false, reason: 'Informe o nome da partida.' };
+
+      for (const kw of appState.blockedKeywords) {
+        if (kw && lower.includes(kw.toLowerCase())) {
+          return { ok: false, reason: `O termo "${kw}" está bloqueado (apenas jogos de futebol são permitidos, não shows/programas).` };
+        }
+      }
+
+      const hasMatchSeparator = /(\s+x\s+|\s+vs\.?\s+|\s+v\s+)/i.test(lower);
+      if (!hasMatchSeparator) {
+        return { ok: false, reason: 'Informe o confronto no formato "Time A x Time B" ou "Time A vs Time B".' };
+      }
+
+      return { ok: true };
+    }
+
+    // =========================================================
+    // PERSISTÊNCIA
+    // =========================================================
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          appState = { ...appState, ...parsed };
+          return;
+        } catch (e) {
+          console.error('Erro ao ler storage:', e);
+        }
+      }
+
+      // Exemplos iniciais
+      const ts = nowFormatted();
+      INITIAL_SAMPLE_GAMES.forEach(item => {
+        const league = detectLeague(item.name);
+        const tpl = appState.templates[league] || appState.templates['Padrão Futebol'] || [];
+        appState.games.push({
+          id: 'game_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          name: item.name,
+          league,
+          eventDate: item.eventDate,
+          openStart: item.openStart,
+          broadcast: item.broadcast,
+          kickOff: item.kickOff,
+          endGame: item.endGame,
+          status: 'ACTIVE',
+          changeFlag: 'NONE',
+          lastChangeSummary: '',
+          createdAt: ts,
+          updatedAt: null,
+          removedAt: null,
+          checklist: tpl.map((t, idx) => ({
+            id: 'chk_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
+            stage: t.stage,
+            text: t.text,
+            done: false,
+            doneAt: null
+          }))
+        });
+      });
+      appState.lastMovement = ts;
+      saveState();
+    }
+
+    // =========================================================
+    // CADASTRO, EDIÇÃO E EXCLUSÃO MANUAL DE JOGOS
+    // =========================================================
+    function openGameFormModal(gameToEdit = null) {
+      const modal = document.getElementById('gameFormModal');
+      const titleEl = document.getElementById('gameFormTitle');
+      const editIdEl = document.getElementById('editingGameId');
+      const tplSelect = document.getElementById('fieldInitialTemplate');
+      const tplWrap = document.getElementById('initialChecklistSourceWrap');
+
+      // Popula opções de modelo inicial
+      const tplKeys = Object.keys(appState.templates);
+      tplSelect.innerHTML =
+        '<option value="AUTO">Automático pelo Campeonato</option>' +
+        '<option value="EMPTY">Começar em branco</option>' +
+        tplKeys.map(k => `<option value="TPL:${k}">Modelo: ${k}</option>`).join('');
+
+      if (gameToEdit) {
+        titleEl.textContent = 'Editar Jogo';
+        editIdEl.value = gameToEdit.id;
+        document.getElementById('fieldName').value = gameToEdit.name;
+        document.getElementById('fieldEventDate').value = gameToEdit.eventDate !== '—' ? gameToEdit.eventDate : '';
+        document.getElementById('fieldOpenStart').value = gameToEdit.openStart !== '—' ? gameToEdit.openStart : '';
+        document.getElementById('fieldBroadcast').value = gameToEdit.broadcast !== '—' ? gameToEdit.broadcast : '';
+        document.getElementById('fieldKickOff').value = gameToEdit.kickOff !== '—' ? gameToEdit.kickOff : '';
+        document.getElementById('fieldEndGame').value = gameToEdit.endGame !== '—' ? gameToEdit.endGame : '';
+        tplWrap.classList.add('hidden');
+      } else {
+        titleEl.textContent = 'Novo Jogo de Futebol';
+        editIdEl.value = '';
+        document.getElementById('fieldName').value = '';
+        document.getElementById('fieldEventDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('fieldOpenStart').value = '';
+        document.getElementById('fieldBroadcast').value = '';
+        document.getElementById('fieldKickOff').value = '';
+        document.getElementById('fieldEndGame').value = '';
+        tplWrap.classList.remove('hidden');
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('fieldName').focus(), 50);
+    }
+
+    function closeGameFormModal() {
+      const modal = document.getElementById('gameFormModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openEditFromDrawer() {
+      if (!selectedGameId) return;
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (game) openGameFormModal(game);
+    }
+
+    function handleSaveManualGame(event) {
+      event.preventDefault();
+
+      const editId = document.getElementById('editingGameId').value;
+      const name = document.getElementById('fieldName').value.trim();
+      const eventDate = document.getElementById('fieldEventDate').value.trim() || '—';
+      const openStart = document.getElementById('fieldOpenStart').value.trim() || '—';
+      const broadcast = document.getElementById('fieldBroadcast').value.trim() || '—';
+      const kickOff = document.getElementById('fieldKickOff').value.trim() || '—';
+      const endGame = document.getElementById('fieldEndGame').value.trim() || '—';
+
+      const validation = validateFootballMatchName(name);
+      if (!validation.ok) {
+        alert(validation.reason);
+        return;
+      }
+
+      const timestamp = nowFormatted();
+      const league = detectLeague(name);
+
+      if (editId) {
+        // EDIÇÃO DE JOGO EXISTENTE
+        const game = appState.games.find(g => g.id === editId);
+        if (!game) return;
+
+        const changes = [];
+        const fieldsToCheck = [
+          { key: 'name', label: 'Name', next: name },
+          { key: 'eventDate', label: 'Event Date', next: eventDate },
+          { key: 'openStart', label: 'Open Start', next: openStart },
+          { key: 'broadcast', label: 'Broadcast', next: broadcast },
+          { key: 'kickOff', label: 'Kick Off', next: kickOff },
+          { key: 'endGame', label: 'End Game', next: endGame }
+        ];
+
+        fieldsToCheck.forEach(f => {
+          if ((game[f.key] || '—') !== f.next) {
+            changes.push(`${f.label}: ${game[f.key]} → ${f.next}`);
+            game[f.key] = f.next;
+          }
+        });
+
+        game.league = league;
+
+        if (changes.length > 0) {
+          game.updatedAt = timestamp;
+          game.changeFlag = 'UPDATED';
+          game.lastChangeSummary = changes.join(' • ');
+
+          appState.auditLogs.unshift({
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+            type: 'UPDATED',
+            gameName: game.name,
+            league,
+            timestamp,
+            source: 'Edição Manual',
+            details: changes.join(' | ')
+          });
+          appState.lastMovement = timestamp;
+        }
+      } else {
+        // NOVO JOGO INCLUÍDO MANUALMENTE
+        const tplChoice = document.getElementById('fieldInitialTemplate').value;
+        let baseTopics = [];
+        if (tplChoice === 'AUTO') {
+          baseTopics = appState.templates[league] || appState.templates['Padrão Futebol'] || [];
+        } else if (tplChoice.startsWith('TPL:')) {
+          const tplKey = tplChoice.slice(4);
+          baseTopics = appState.templates[tplKey] || [];
+        }
+
+        const newGame = {
+          id: 'game_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          name,
+          league,
+          eventDate,
+          openStart,
+          broadcast,
+          kickOff,
+          endGame,
+          status: 'ACTIVE',
+          changeFlag: 'NEW',
+          lastChangeSummary: 'Incluído manualmente',
+          createdAt: timestamp,
+          updatedAt: null,
+          removedAt: null,
+          checklist: baseTopics.map((t, idx) => ({
+            id: 'chk_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
+            stage: t.stage,
+            text: t.text,
+            done: false,
+            doneAt: null
+          }))
+        };
+
+        appState.games.unshift(newGame);
+        appState.auditLogs.unshift({
+          id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          type: 'ADDED',
+          gameName: name,
+          league,
+          timestamp,
+          source: 'Inclusão Manual',
+          details: `Event Date: ${eventDate} | Open: ${openStart} | Broad: ${broadcast} | Kick Off: ${kickOff} | End: ${endGame}`
+        });
+        appState.lastMovement = timestamp;
+      }
+
+      saveState();
+      closeGameFormModal();
+      refreshAllUI();
+    }
+
+    function removeGame(event, gameId) {
+      event.stopPropagation();
+      const game = appState.games.find(g => g.id === gameId);
+      if (!game) return;
+
+      if (!confirm(`Deseja excluir "${game.name}" da grade ativa?\n(O registro ficará salvo no histórico com a data de exclusão.)`)) {
+        return;
+      }
+
+      const timestamp = nowFormatted();
+      game.status = 'REMOVED';
+      game.changeFlag = 'REMOVED';
+      game.removedAt = timestamp;
+      game.lastChangeSummary = `Excluído em ${timestamp}`;
+
+      appState.auditLogs.unshift({
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        type: 'REMOVED',
+        gameName: game.name,
+        league: game.league,
+        timestamp,
+        source: 'Exclusão Manual',
+        details: `Excluído da grade (havia sido incluído em ${game.createdAt})`
+      });
+
+      appState.lastMovement = timestamp;
+      saveState();
+      refreshAllUI();
+    }
+
+    function restoreRemovedGame(event, gameId) {
+      event.stopPropagation();
+      const game = appState.games.find(g => g.id === gameId);
+      if (!game) return;
+
+      const timestamp = nowFormatted();
+      game.status = 'ACTIVE';
+      game.changeFlag = 'NEW';
+      game.removedAt = null;
+      game.updatedAt = timestamp;
+      game.lastChangeSummary = `Reativado em ${timestamp}`;
+
+      appState.auditLogs.unshift({
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        type: 'ADDED',
+        gameName: game.name,
+        league: game.league,
+        timestamp,
+        source: 'Reativação Manual',
+        details: 'Jogo restaurado para a grade ativa'
+      });
+
+      appState.lastMovement = timestamp;
+      saveState();
+      refreshAllUI();
+    }
+
+    // =========================================================
+    // RENDERIZAÇÃO DA TABELA E ESTATÍSTICAS
+    // =========================================================
+    function refreshAllUI() {
+      updateStats();
+      populateLeagueDropdown();
+      renderGamesTable();
+      renderAuditLog();
+      renderTemplatesView();
+      if (selectedGameId) {
+        const stillExists = appState.games.find(g => g.id === selectedGameId);
+        if (stillExists) renderDrawerContent(stillExists);
+      }
+    }
+
+    function updateStats() {
+      const activeGames = appState.games.filter(g => g.status === 'ACTIVE');
+
+      let readyLists = 0;
+      let totalItems = 0;
+      let doneItems = 0;
+
+      activeGames.forEach(g => {
+        const total = g.checklist.length;
+        const done = g.checklist.filter(i => i.done).length;
+        totalItems += total;
+        doneItems += done;
+        if (total > 0 && done === total) readyLists++;
+      });
+
+      const avgPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
+
+      const addedLogs = appState.auditLogs.filter(l => l.type === 'ADDED').length;
+      const updatedLogs = appState.auditLogs.filter(l => l.type === 'UPDATED').length;
+      const removedLogs = appState.auditLogs.filter(l => l.type === 'REMOVED').length;
+
+      document.getElementById('statActiveGames').textContent = activeGames.length;
+      document.getElementById('statCompletedLists').textContent = `${readyLists}/${activeGames.length}`;
+      document.getElementById('statAvgProgress').textContent = `${avgPct}% itens feitos`;
+
+      document.getElementById('statAddedCount').textContent = addedLogs;
+      document.getElementById('statUpdatedCount').textContent = updatedLogs;
+      document.getElementById('statRemovedCount').textContent = removedLogs;
+
+      document.getElementById('badgeAuditTotal').textContent = appState.auditLogs.length;
+      document.getElementById('badgeTemplatesTotal').textContent = Object.keys(appState.templates).length;
+      document.getElementById('lastSyncLabel').textContent = appState.lastMovement || '—';
+      document.getElementById('blockedKeywordsCount').textContent = appState.blockedKeywords.length;
+    }
+
+    function populateLeagueDropdown() {
+      const select = document.getElementById('leagueFilter');
+      const current = select.value;
+      const leagues = Array.from(new Set(appState.games.map(g => g.league))).sort();
+      select.innerHTML = '<option value="ALL">Todos os Campeonatos</option>' +
+        leagues.map(l => `<option value="${l}">${l}</option>`).join('');
+      if (leagues.includes(current)) select.value = current;
+    }
+
+    function renderGamesTable() {
+      const tbody = document.getElementById('gamesTableBody');
+      const emptyState = document.getElementById('emptyGamesState');
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const leagueFilter = document.getElementById('leagueFilter').value;
+      const statusFilter = document.getElementById('statusChangeFilter').value;
+
+      const filtered = appState.games.filter(g => {
+        if (statusFilter === 'ACTIVE' && g.status !== 'ACTIVE') return false;
+        if (statusFilter === 'NEW' && g.changeFlag !== 'NEW') return false;
+        if (statusFilter === 'UPDATED' && g.changeFlag !== 'UPDATED') return false;
+        if (statusFilter === 'REMOVED' && g.status !== 'REMOVED') return false;
+
+        if (leagueFilter !== 'ALL' && g.league !== leagueFilter) return false;
+        if (search && !g.name.toLowerCase().includes(search) && !g.league.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      tbody.innerHTML = filtered.map(g => {
+        const total = g.checklist.length;
+        const done = g.checklist.filter(i => i.done).length;
+        const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        const isRemoved = g.status === 'REMOVED';
+
+        let flagBadge = '';
+        if (g.status === 'REMOVED') {
+          flagBadge = `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-rose-500/20 text-rose-400 border border-rose-500/30">EXCLUÍDO</span>`;
+        } else if (g.changeFlag === 'NEW') {
+          flagBadge = `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">NOVO</span>`;
+        } else if (g.changeFlag === 'UPDATED') {
+          flagBadge = `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">ALTERADO</span>`;
+        }
+
+        return `
+          <tr onclick="openChecklistDrawer('${g.id}')"
+            class="cursor-pointer transition ${isRemoved ? 'bg-rose-950/15 opacity-75 hover:opacity-100' : 'hover:bg-slate-800/60'}">
+            <td class="py-3.5 px-4">
+              <div class="flex flex-wrap items-center gap-1.5 mb-1">
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">${g.league}</span>
+                ${flagBadge}
+              </div>
+              <div class="font-semibold text-sm ${isRemoved ? 'line-through text-slate-400' : 'text-white'}">${g.name}</div>
+              ${g.lastChangeSummary ? `<div class="text-[11px] text-amber-300/90 mt-0.5">${g.lastChangeSummary}</div>` : ''}
+            </td>
+            <td class="py-3.5 px-3 font-mono-time text-slate-300 whitespace-nowrap">${g.eventDate}</td>
+            <td class="py-3.5 px-3 font-mono-time text-slate-300 whitespace-nowrap">${g.openStart}</td>
+            <td class="py-3.5 px-3 font-mono-time text-slate-300 whitespace-nowrap">${g.broadcast}</td>
+            <td class="py-3.5 px-3 font-mono-time font-bold text-emerald-400 whitespace-nowrap">${g.kickOff}</td>
+            <td class="py-3.5 px-3 font-mono-time text-slate-300 whitespace-nowrap">${g.endGame}</td>
+            <td class="py-3.5 px-3 text-[11px] whitespace-nowrap">
+              <div class="text-slate-400">Inc: <span class="text-slate-200 font-mono-time">${g.createdAt}</span></div>
+              ${g.updatedAt ? `<div class="text-amber-400/90">Alt: <span class="font-mono-time">${g.updatedAt}</span></div>` : ''}
+              ${g.removedAt ? `<div class="text-rose-400 font-semibold">Exc: <span class="font-mono-time">${g.removedAt}</span></div>` : ''}
+            </td>
+            <td class="py-3.5 px-3 text-right whitespace-nowrap">
+              <div class="inline-flex flex-col items-end gap-1">
+                <span class="text-xs font-bold ${pct === 100 && total > 0 ? 'text-emerald-400' : 'text-slate-200'}">${done}/${total} (${pct}%)</span>
+                <div class="w-20 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                  <div class="h-full ${pct === 100 && total > 0 ? 'bg-emerald-500' : 'bg-sky-500'}" style="width: ${pct}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="py-3.5 px-4 text-right whitespace-nowrap" onclick="event.stopPropagation()">
+              <div class="inline-flex items-center gap-1">
+                <button onclick="openGameFormModal(appState.games.find(x => x.id === '${g.id}'))"
+                  class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-300 text-[11px] font-medium" title="Editar">
+                  ✎
+                </button>
+                ${isRemoved
+                  ? `<button onclick="restoreRemovedGame(event, '${g.id}')" class="px-2 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[11px] font-semibold" title="Reativar">↺</button>`
+                  : `<button onclick="removeGame(event, '${g.id}')" class="px-2 py-1 rounded bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 text-[11px] font-medium" title="Excluir">✕</button>`
+                }
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =========================================================
+    // TABS & AUDIT LOG VIEW
+    // =========================================================
+    function switchMainTab(tabName, auditPreset = null) {
+      currentMainTab = tabName;
+
+      document.getElementById('viewGames').classList.toggle('hidden', tabName !== 'games');
+      document.getElementById('gamesFilterControls').classList.toggle('hidden', tabName !== 'games');
+      document.getElementById('viewAudit').classList.toggle('hidden', tabName !== 'audit');
+      document.getElementById('viewTemplates').classList.toggle('hidden', tabName !== 'templates');
+
+      const activeBtnClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white transition';
+      const inactiveBtnClass = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700 transition inline-flex items-center gap-1.5';
+
+      document.getElementById('tabBtnGames').className = tabName === 'games' ? activeBtnClass : inactiveBtnClass;
+      document.getElementById('tabBtnAudit').className = tabName === 'audit' ? activeBtnClass : inactiveBtnClass;
+      document.getElementById('tabBtnTemplates').className = tabName === 'templates' ? activeBtnClass : inactiveBtnClass;
+
+      if (tabName === 'audit') {
+        if (auditPreset) currentAuditFilter = auditPreset;
+        setAuditTypeFilter(currentAuditFilter);
+      }
+    }
+
+    function setAuditTypeFilter(type) {
+      currentAuditFilter = type;
+      ['ALL', 'ADDED', 'UPDATED', 'REMOVED'].forEach(t => {
+        const btn = document.getElementById('auditFilter' + t);
+        if (t === type) {
+          btn.classList.add('ring-2', 'ring-emerald-500');
+        } else {
+          btn.classList.remove('ring-2', 'ring-emerald-500');
+        }
+      });
+      renderAuditLog();
+    }
+
+    function renderAuditLog() {
+      const container = document.getElementById('auditLogContainer');
+      const query = (document.getElementById('auditSearchInput')?.value || '').toLowerCase().trim();
+
+      const filtered = appState.auditLogs.filter(log => {
+        if (currentAuditFilter !== 'ALL' && log.type !== currentAuditFilter) return false;
+        if (query && !log.gameName.toLowerCase().includes(query) && !log.details.toLowerCase().includes(query)) return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="bg-[#111827] border border-slate-800 rounded-xl p-10 text-center text-xs text-slate-400">
+            Nenhum registro de movimentação encontrado para este filtro.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(log => {
+        let badgeHtml = '';
+        let borderClass = 'border-slate-800';
+        if (log.type === 'ADDED') {
+          badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">+ INCLUSÃO</span>';
+          borderClass = 'border-emerald-500/25';
+        } else if (log.type === 'UPDATED') {
+          badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">✎ ALTERAÇÃO</span>';
+          borderClass = 'border-amber-500/25';
+        } else {
+          badgeHtml = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">✕ EXCLUSÃO</span>';
+          borderClass = 'border-rose-500/25';
+        }
+
+        return `
+          <div class="bg-[#111827] border ${borderClass} rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                ${badgeHtml}
+                <span class="text-[11px] font-medium text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded">${log.league}</span>
+                <span class="text-xs font-bold text-white">${log.gameName}</span>
+              </div>
+              <p class="text-xs text-slate-300 font-mono-time">${log.details}</p>
+            </div>
+            <div class="text-left sm:text-right shrink-0">
+              <div class="text-xs font-mono-time font-semibold text-slate-200">${log.timestamp}</div>
+              <div class="text-[11px] text-slate-500">${log.source}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function clearAuditHistory() {
+      if (!confirm('Deseja limpar todo o histórico de auditoria?')) return;
+      appState.auditLogs = [];
+      saveState();
+      refreshAllUI();
+    }
+
+    // =========================================================
+    // CHECKLIST DRAWER (ABRIR JOGO, TÓPICOS, MODELOS, CLONAGEM)
+    // =========================================================
+    function openChecklistDrawer(gameId) {
+      const game = appState.games.find(g => g.id === gameId);
+      if (!game) return;
+      selectedGameId = gameId;
+
+      document.getElementById('checklistDrawerBackdrop').classList.remove('hidden');
+      const drawer = document.getElementById('checklistDrawer');
+      drawer.classList.remove('hidden');
+      drawer.classList.add('flex');
+
+      renderDrawerContent(game);
+    }
+
+    function closeChecklistDrawer() {
+      selectedGameId = null;
+      document.getElementById('checklistDrawerBackdrop').classList.add('hidden');
+      const drawer = document.getElementById('checklistDrawer');
+      drawer.classList.add('hidden');
+      drawer.classList.remove('flex');
+    }
+
+    function renderDrawerContent(game) {
+      document.getElementById('drawerLeagueBadge').textContent = game.league;
+      document.getElementById('drawerGameName').textContent = game.name;
+      document.getElementById('drawerEventDate').textContent = game.eventDate;
+      document.getElementById('drawerOpenStart').textContent = game.openStart;
+      document.getElementById('drawerBroadcast').textContent = game.broadcast;
+      document.getElementById('drawerKickOff').textContent = game.kickOff;
+      document.getElementById('drawerEndGame').textContent = game.endGame;
+      document.getElementById('drawerCreatedAt').textContent = game.createdAt;
+
+      const statusBadge = document.getElementById('drawerStatusBadge');
+      if (game.status === 'REMOVED') {
+        statusBadge.textContent = 'Excluído';
+        statusBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400';
+      } else {
+        statusBadge.textContent = 'Ativo na Grade';
+        statusBadge.className = 'text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400';
+      }
+
+      const updWrap = document.getElementById('drawerUpdatedWrap');
+      if (game.updatedAt) {
+        updWrap.classList.remove('hidden');
+        document.getElementById('drawerUpdatedAt').textContent = game.updatedAt;
+      } else {
+        updWrap.classList.add('hidden');
+      }
+
+      const remWrap = document.getElementById('drawerRemovedWrap');
+      if (game.removedAt) {
+        remWrap.classList.remove('hidden');
+        document.getElementById('drawerRemovedAt').textContent = game.removedAt;
+      } else {
+        remWrap.classList.add('hidden');
+      }
+
+      // Progresso
+      const total = game.checklist.length;
+      const done = game.checklist.filter(i => i.done).length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      document.getElementById('drawerProgressText').textContent = `${done}/${total} (${pct}%)`;
+      document.getElementById('drawerProgressBar').style.width = `${pct}%`;
+
+      // Select de Modelos de Campeonato
+      const tplSelect = document.getElementById('applyTemplateSelect');
+      const tplKeys = Object.keys(appState.templates);
+      tplSelect.innerHTML = '<option value="">Puxar modelo campeonato...</option>' +
+        tplKeys.map(k => `<option value="${k}" ${k === game.league ? 'selected' : ''}>Modelo: ${k} (${appState.templates[k].length} itens)</option>`).join('');
+
+      // Select de Jogos Existentes para Clonar
+      const cloneSelect = document.getElementById('cloneGameSelect');
+      const otherGames = appState.games.filter(g => g.id !== game.id && g.checklist.length > 0);
+      cloneSelect.innerHTML = '<option value="">Copiar de outro jogo...</option>' +
+        otherGames.map(g => `<option value="${g.id}">${g.name} (${g.checklist.length} itens)</option>`).join('');
+
+      // Lista agrupada por Etapa
+      const container = document.getElementById('drawerChecklistContainer');
+      if (game.checklist.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 bg-slate-900/50 border border-dashed border-slate-800 rounded-xl text-xs text-slate-400">
+            Este jogo ainda não possui tópicos no checklist.<br/>Adicione acima, puxe um modelo de campeonato ou copie de outro jogo.
+          </div>
+        `;
+        return;
+      }
+
+      const stagesOrder = ['Pré-Open', 'Open Start', 'Broadcast', 'Kick Off', 'Intervalo', 'End Game'];
+      const grouped = {};
+      game.checklist.forEach(item => {
+        const st = item.stage || 'Pré-Open';
+        if (!grouped[st]) grouped[st] = [];
+        grouped[st].push(item);
+      });
+
+      const allStages = Array.from(new Set([...stagesOrder, ...Object.keys(grouped)])).filter(st => grouped[st]?.length > 0);
+
+      container.innerHTML = allStages.map(stage => {
+        const itemsHtml = grouped[stage].map(item => `
+          <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-900/90 border ${item.done ? 'border-emerald-500/30 bg-emerald-950/15' : 'border-slate-800'} group">
+            <label class="flex items-start gap-2.5 cursor-pointer flex-1">
+              <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')"
+                class="mt-0.5 w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500 bg-slate-950" />
+              <div>
+                <div class="text-xs font-medium ${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.text}</div>
+                ${item.doneAt ? `<div class="text-[10px] text-emerald-400/80 font-mono-time mt-0.5">✓ Concluído às ${item.doneAt}</div>` : ''}
+              </div>
+            </label>
+            <button onclick="deleteChecklistItem('${item.id}')" class="opacity-60 hover:opacity-100 text-slate-400 hover:text-rose-400 text-xs px-1.5 py-0.5" title="Remover tópico">
+              ✕
+            </button>
+          </div>
+        `).join('');
+
+        return `
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">${stage}</div>
+            <div class="space-y-1.5">${itemsHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function handleAddChecklistItem(event) {
+      event.preventDefault();
+      if (!selectedGameId) return;
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (!game) return;
+
+      const stage = document.getElementById('newItemStage').value;
+      const input = document.getElementById('newItemText');
+      const text = input.value.trim();
+      if (!text) return;
+
+      game.checklist.push({
+        id: 'chk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        stage,
+        text,
+        done: false,
+        doneAt: null
+      });
+
+      input.value = '';
+      saveState();
+      refreshAllUI();
+    }
+
+    function toggleChecklistItem(itemId) {
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (!game) return;
+      const item = game.checklist.find(i => i.id === itemId);
+      if (!item) return;
+
+      item.done = !item.done;
+      item.doneAt = item.done ? new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : null;
+
+      saveState();
+      refreshAllUI();
+    }
+
+    function deleteChecklistItem(itemId) {
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (!game) return;
+      game.checklist = game.checklist.filter(i => i.id !== itemId);
+      saveState();
+      refreshAllUI();
+    }
+
+    function applySelectedTemplate() {
+      const game = appState.games.find(g => g.id === selectedGameId);
+      const tplName = document.getElementById('applyTemplateSelect').value;
+      if (!game || !tplName || !appState.templates[tplName]) return;
+
+      const replace = game.checklist.length === 0 || confirm(`Deseja SUBSTITUIR o checklist atual pelo modelo "${tplName}"?\n(Clique em Cancelar para apenas ADICIONAR ao final)`);
+      const newItems = appState.templates[tplName].map((t, idx) => ({
+        id: 'chk_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
+        stage: t.stage,
+        text: t.text,
+        done: false,
+        doneAt: null
+      }));
+
+      game.checklist = replace ? newItems : [...game.checklist, ...newItems];
+      saveState();
+      refreshAllUI();
+    }
+
+    function cloneFromSelectedGame() {
+      const game = appState.games.find(g => g.id === selectedGameId);
+      const sourceId = document.getElementById('cloneGameSelect').value;
+      const sourceGame = appState.games.find(g => g.id === sourceId);
+      if (!game || !sourceGame) return;
+
+      const replace = game.checklist.length === 0 || confirm(`Substituir o checklist atual pelos tópicos de "${sourceGame.name}"?`);
+      const clonedItems = sourceGame.checklist.map((t, idx) => ({
+        id: 'chk_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
+        stage: t.stage,
+        text: t.text,
+        done: false,
+        doneAt: null
+      }));
+
+      game.checklist = replace ? clonedItems : [...game.checklist, ...clonedItems];
+      saveState();
+      refreshAllUI();
+    }
+
+    function saveCurrentChecklistAsTemplate() {
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (!game || game.checklist.length === 0) {
+        alert('Adicione ao menos 1 tópico antes de salvar como modelo.');
+        return;
+      }
+      const tplName = prompt('Nome do modelo de campeonato:', game.league);
+      if (!tplName || !tplName.trim()) return;
+
+      appState.templates[tplName.trim()] = game.checklist.map(i => ({
+        stage: i.stage,
+        text: i.text
+      }));
+      saveState();
+      refreshAllUI();
+      alert(`Modelo "${tplName.trim()}" salvo com ${game.checklist.length} tópicos!`);
+    }
+
+    // =========================================================
+    // GERENCIAMENTO DE MODELOS POR CAMPEONATO
+    // =========================================================
+    function renderTemplatesView() {
+      const grid = document.getElementById('templatesGrid');
+      const keys = Object.keys(appState.templates);
+
+      grid.innerHTML = keys.map(name => {
+        const items = appState.templates[name];
+        return `
+          <div class="bg-[#111827] border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-4">
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-2">
+                <h3 class="text-sm font-bold text-white">${name}</h3>
+                <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300">${items.length} tópicos</span>
+              </div>
+              <ul class="space-y-1.5 text-xs text-slate-300 max-h-48 overflow-y-auto pr-1">
+                ${items.map(i => `<li class="flex items-start gap-1.5"><span class="text-emerald-400 font-semibold">[${i.stage}]</span> <span>${i.text}</span></li>`).join('')}
+              </ul>
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex items-center justify-between">
+              <button onclick="addTopicToTemplate('${name}')" class="text-xs font-semibold text-emerald-400 hover:text-emerald-300">+ Adicionar tópico</button>
+              <button onclick="deleteTemplate('${name}')" class="text-xs text-slate-500 hover:text-rose-400">Excluir modelo</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function createNewTemplatePrompt() {
+      const name = prompt('Nome do campeonato para o novo modelo (ex: Premier League, La Liga):');
+      if (!name || !name.trim()) return;
+      if (!appState.templates[name.trim()]) {
+        appState.templates[name.trim()] = [
+          { stage: 'Pré-Open', text: 'Validar sinal internacional e áudio de cabine' },
+          { stage: 'Kick Off', text: 'Conferir placar e cronômetro oficial' }
+        ];
+      }
+      saveState();
+      refreshAllUI();
+    }
+
+    function addTopicToTemplate(tplName) {
+      const text = prompt(`Novo tópico para o modelo "${tplName}":`);
+      if (!text || !text.trim()) return;
+      const stage = prompt('Etapa (Pré-Open, Open Start, Broadcast, Kick Off, Intervalo, End Game):', 'Broadcast') || 'Broadcast';
+      appState.templates[tplName].push({ stage: stage.trim(), text: text.trim() });
+      saveState();
+      refreshAllUI();
+    }
+
+    function deleteTemplate(tplName) {
+      if (!confirm(`Excluir o modelo "${tplName}"?`)) return;
+      delete appState.templates[tplName];
+      saveState();
+      refreshAllUI();
+    }
+
+    // =========================================================
+    // BLOQUEIO DE SHOWS & BACKUP JSON
+    // =========================================================
+    function openFilterRulesModal() {
+      renderBlockedKeywords();
+      const modal = document.getElementById('filterRulesModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeFilterRulesModal() {
+      const modal = document.getElementById('filterRulesModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderBlockedKeywords() {
+      const container = document.getElementById('keywordsListContainer');
+      container.innerHTML = appState.blockedKeywords.map((kw, idx) => `
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-200">
+          ${kw}
+          <button onclick="removeBlockedKeyword(${idx})" class="text-slate-400 hover:text-rose-400 font-bold">×</button>
+        </span>
+      `).join('');
+    }
+
+    function addBlockedKeyword() {
+      const input = document.getElementById('newKeywordInput');
+      const val = input.value.trim().toLowerCase();
+      if (!val) return;
+      if (!appState.blockedKeywords.includes(val)) {
+        appState.blockedKeywords.push(val);
+        saveState();
+        renderBlockedKeywords();
+        updateStats();
+      }
+      input.value = '';
+    }
+
+    function removeBlockedKeyword(idx) {
+      appState.blockedKeywords.splice(idx, 1);
+      saveState();
+      renderBlockedKeywords();
+      updateStats();
+    }
+
+    function exportBackupJson() {
+      const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-checklists-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackupJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported.games || !Array.isArray(imported.games)) {
+            alert('Arquivo de backup inválido.');
+            return;
+          }
+          appState = { ...appState, ...imported };
+          saveState();
+          refreshAllUI();
+          alert('Backup restaurado com sucesso!');
+        } catch (err) {
+          alert('Erro ao ler o arquivo JSON.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Boot
+    loadState();
+    refreshAllUI();
+  </script>
+</body>
+</html>
