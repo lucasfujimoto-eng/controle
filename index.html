@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_content = r'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
@@ -38,6 +38,21 @@
     .drawer-enter {
       animation: slideInRight 0.22s ease-out forwards;
     }
+    .checklist-item-dragging {
+      opacity: 0.45;
+      border-style: dashed !important;
+      border-color: #34d399 !important;
+    }
+    .checklist-drop-above {
+      box-shadow: 0 -2px 0 0 #10b981;
+    }
+    .checklist-drop-below {
+      box-shadow: 0 2px 0 0 #10b981;
+    }
+    .stage-drop-highlight {
+      border-color: #10b981 !important;
+      background-color: rgba(16, 185, 129, 0.08) !important;
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
@@ -52,9 +67,11 @@
           </svg>
         </div>
         <div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-base md:text-lg font-bold text-white tracking-tight">Broadcast Ops • Checklists</h1>
-            <span class="text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Cadastro Manual</span>
+            <span id="autoSaveStatusBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              ✓ Salvo automaticamente no navegador
+            </span>
           </div>
           <p class="text-xs text-slate-400">
             Campos: <span class="text-slate-300 font-medium">Name • Event Date • Open Start • Broadcast • Kick Off • End Game</span>
@@ -62,14 +79,23 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2.5">
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="downloadStandaloneHtml()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition"
+          title="Baixa uma nova cópia deste arquivo HTML já com todas as suas alterações embutidas dentro dele">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/>
+          </svg>
+          Salvar Arquivo HTML Atualizado
+        </button>
+
         <button onclick="exportBackupJson()"
           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-          title="Salvar cópia de segurança dos seus jogos, checklists e modelos">
+          title="Exportar cópia de segurança em JSON">
           <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
           </svg>
-          Backup
+          Backup JSON
         </button>
 
         <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
@@ -371,6 +397,12 @@
         </button>
       </form>
 
+      <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="text-slate-300 font-semibold">⋮⋮</span> Arraste os tópicos para reordenar ou mover entre etapas
+        </span>
+      </div>
+
       <!-- Items List -->
       <div id="drawerChecklistContainer" class="space-y-3">
         <!-- Populated by JS -->
@@ -486,11 +518,14 @@
     </div>
   </div>
 
+  <!-- EMBEDDED STATE FOR PORTABLE HTML SAVING -->
+  <script id="embeddedStateData" type="application/json">null</script>
+
   <script>
     // =========================================================
-    // ESTADO E STORAGE
+    // ESTADO E STORAGE (PERSISTÊNCIA DUPLA: LOCALSTORAGE + HTML PORTÁTIL)
     // =========================================================
-    const STORAGE_KEY = 'broadcast_ops_manual_v4';
+    const STORAGE_KEY = 'broadcast_ops_manual_v6';
 
     const DEFAULT_BLOCKED_KEYWORDS = [
       'show da bundesliga',
@@ -548,12 +583,14 @@
       auditLogs: [],
       templates: JSON.parse(JSON.stringify(DEFAULT_TEMPLATES)),
       blockedKeywords: [...DEFAULT_BLOCKED_KEYWORDS],
-      lastMovement: null
+      lastMovement: null,
+      savedRevision: 0
     };
 
     let selectedGameId = null;
     let currentMainTab = 'games';
     let currentAuditFilter = 'ALL';
+    let draggedChecklistItemId = null;
 
     // =========================================================
     // UTILITÁRIOS
@@ -597,25 +634,56 @@
     }
 
     // =========================================================
-    // PERSISTÊNCIA
+    // PERSISTÊNCIA AUTOMÁTICA + EXPORTAÇÃO HTML AUTOCONTIDO
     // =========================================================
     function saveState() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      appState.savedRevision = (appState.savedRevision || 0) + 1;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.warn('Não foi possível salvar no localStorage:', e);
+      }
+      const badge = document.getElementById('autoSaveStatusBadge');
+      if (badge) {
+        const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        badge.textContent = `✓ Alterações salvas (${timeStr})`;
+      }
     }
 
     function loadState() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      let embedded = null;
+      const embeddedEl = document.getElementById('embeddedStateData');
+      if (embeddedEl && embeddedEl.textContent.trim() && embeddedEl.textContent.trim() !== 'null') {
         try {
-          const parsed = JSON.parse(saved);
-          appState = { ...appState, ...parsed };
-          return;
+          embedded = JSON.parse(embeddedEl.textContent);
         } catch (e) {
-          console.error('Erro ao ler storage:', e);
+          console.error('Erro ao ler dados embutidos no HTML:', e);
         }
       }
 
-      // Exemplos iniciais
+      let local = null;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) local = JSON.parse(saved);
+      } catch (e) {
+        console.error('Erro ao ler localStorage:', e);
+      }
+
+      if (embedded && local) {
+        appState = (embedded.savedRevision || 0) >= (local.savedRevision || 0)
+          ? { ...appState, ...embedded }
+          : { ...appState, ...local };
+        saveState();
+        return;
+      } else if (embedded) {
+        appState = { ...appState, ...embedded };
+        saveState();
+        return;
+      } else if (local) {
+        appState = { ...appState, ...local };
+        return;
+      }
+
       const ts = nowFormatted();
       INITIAL_SAMPLE_GAMES.forEach(item => {
         const league = detectLeague(item.name);
@@ -648,6 +716,33 @@
       saveState();
     }
 
+    function downloadStandaloneHtml() {
+      const cloneDoc = document.documentElement.cloneNode(true);
+      const drawer = cloneDoc.querySelector('#checklistDrawer');
+      const backdrop = cloneDoc.querySelector('#checklistDrawerBackdrop');
+      const formModal = cloneDoc.querySelector('#gameFormModal');
+      const filterModal = cloneDoc.querySelector('#filterRulesModal');
+
+      if (drawer) { drawer.classList.add('hidden'); drawer.classList.remove('flex'); }
+      if (backdrop) backdrop.classList.add('hidden');
+      if (formModal) { formModal.classList.add('hidden'); formModal.classList.remove('flex'); }
+      if (filterModal) { filterModal.classList.add('hidden'); filterModal.classList.remove('flex'); }
+
+      const dataScript = cloneDoc.querySelector('#embeddedStateData');
+      if (dataScript) {
+        dataScript.textContent = JSON.stringify(appState);
+      }
+
+      const fullHtml = '<!DOCTYPE html>\n' + cloneDoc.outerHTML;
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `checklist-transmissoes-${new Date().toISOString().slice(0, 10)}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     // =========================================================
     // CADASTRO, EDIÇÃO E EXCLUSÃO MANUAL DE JOGOS
     // =========================================================
@@ -658,7 +753,6 @@
       const tplSelect = document.getElementById('fieldInitialTemplate');
       const tplWrap = document.getElementById('initialChecklistSourceWrap');
 
-      // Popula opções de modelo inicial
       const tplKeys = Object.keys(appState.templates);
       tplSelect.innerHTML =
         '<option value="AUTO">Automático pelo Campeonato</option>' +
@@ -725,7 +819,6 @@
       const league = detectLeague(name);
 
       if (editId) {
-        // EDIÇÃO DE JOGO EXISTENTE
         const game = appState.games.find(g => g.id === editId);
         if (!game) return;
 
@@ -765,7 +858,6 @@
           appState.lastMovement = timestamp;
         }
       } else {
-        // NOVO JOGO INCLUÍDO MANUALMENTE
         const tplChoice = document.getElementById('fieldInitialTemplate').value;
         let baseTopics = [];
         if (tplChoice === 'AUTO') {
@@ -1116,7 +1208,7 @@
     }
 
     // =========================================================
-    // CHECKLIST DRAWER (ABRIR JOGO, TÓPICOS, MODELOS, CLONAGEM)
+    // CHECKLIST DRAWER + ARRASTAR E SOLTAR (DRAG & DROP)
     // =========================================================
     function openChecklistDrawer(gameId) {
       const game = appState.games.find(g => g.id === gameId);
@@ -1193,7 +1285,7 @@
       cloneSelect.innerHTML = '<option value="">Copiar de outro jogo...</option>' +
         otherGames.map(g => `<option value="${g.id}">${g.name} (${g.checklist.length} itens)</option>`).join('');
 
-      // Lista agrupada por Etapa
+      // Lista agrupada por Etapa (com suporte a arrastar e soltar)
       const container = document.getElementById('drawerChecklistContainer');
       if (game.checklist.length === 0) {
         container.innerHTML = `
@@ -1216,28 +1308,143 @@
 
       container.innerHTML = allStages.map(stage => {
         const itemsHtml = grouped[stage].map(item => `
-          <div class="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-slate-900/90 border ${item.done ? 'border-emerald-500/30 bg-emerald-950/15' : 'border-slate-800'} group">
-            <label class="flex items-start gap-2.5 cursor-pointer flex-1">
-              <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')"
-                class="mt-0.5 w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500 bg-slate-950" />
-              <div>
-                <div class="text-xs font-medium ${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.text}</div>
-                ${item.doneAt ? `<div class="text-[10px] text-emerald-400/80 font-mono-time mt-0.5">✓ Concluído às ${item.doneAt}</div>` : ''}
-              </div>
-            </label>
-            <button onclick="deleteChecklistItem('${item.id}')" class="opacity-60 hover:opacity-100 text-slate-400 hover:text-rose-400 text-xs px-1.5 py-0.5" title="Remover tópico">
+          <div draggable="true"
+            data-item-id="${item.id}"
+            data-stage="${stage}"
+            ondragstart="onChecklistDragStart(event, '${item.id}')"
+            ondragover="onChecklistDragOver(event)"
+            ondragleave="onChecklistDragLeave(event)"
+            ondrop="onChecklistDropOnItem(event, '${item.id}', '${stage}')"
+            ondragend="onChecklistDragEnd(event)"
+            class="checklist-draggable flex items-center justify-between gap-2.5 p-2.5 rounded-lg bg-slate-900/90 border ${item.done ? 'border-emerald-500/30 bg-emerald-950/15' : 'border-slate-800'} hover:border-slate-700 transition select-none">
+            <div class="flex items-start gap-2 flex-1 min-w-0">
+              <span class="cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 px-1 pt-0.5 text-sm leading-none" title="Arraste para reordenar">⋮⋮</span>
+              <label class="flex items-start gap-2.5 cursor-pointer flex-1 min-w-0">
+                <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem('${item.id}')"
+                  class="mt-0.5 w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500 bg-slate-950 shrink-0" />
+                <div class="min-w-0">
+                  <div class="text-xs font-medium break-words ${item.done ? 'line-through text-slate-500' : 'text-slate-200'}">${item.text}</div>
+                  ${item.doneAt ? `<div class="text-[10px] text-emerald-400/80 font-mono-time mt-0.5">✓ Concluído às ${item.doneAt}</div>` : ''}
+                </div>
+              </label>
+            </div>
+            <button onclick="deleteChecklistItem('${item.id}')" class="opacity-60 hover:opacity-100 text-slate-400 hover:text-rose-400 text-xs px-1.5 py-0.5 shrink-0" title="Remover tópico">
               ✕
             </button>
           </div>
         `).join('');
 
         return `
-          <div class="space-y-1.5">
-            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1">${stage}</div>
+          <div class="stage-drop-zone rounded-xl border border-transparent p-1.5 transition space-y-1.5"
+            ondragover="onStageDragOver(event)"
+            ondragleave="onStageDragLeave(event)"
+            ondrop="onChecklistDropOnStage(event, '${stage}')">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-1 flex items-center justify-between">
+              <span>${stage}</span>
+              <span class="text-[10px] font-normal text-slate-500">${grouped[stage].length} ${grouped[stage].length === 1 ? 'item' : 'itens'}</span>
+            </div>
             <div class="space-y-1.5">${itemsHtml}</div>
           </div>
         `;
       }).join('');
+    }
+
+    // Handlers de Drag & Drop
+    function onChecklistDragStart(event, itemId) {
+      draggedChecklistItemId = itemId;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', itemId);
+      requestAnimationFrame(() => {
+        event.currentTarget.classList.add('checklist-item-dragging');
+      });
+    }
+
+    function onChecklistDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      const target = event.currentTarget;
+      if (target.dataset.itemId === draggedChecklistItemId) return;
+
+      const rect = target.getBoundingClientRect();
+      const isBelow = (event.clientY - rect.top) > rect.height / 2;
+      target.classList.toggle('checklist-drop-below', isBelow);
+      target.classList.toggle('checklist-drop-above', !isBelow);
+    }
+
+    function onChecklistDragLeave(event) {
+      event.currentTarget.classList.remove('checklist-drop-above', 'checklist-drop-below');
+    }
+
+    function onStageDragOver(event) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'move';
+      event.currentTarget.classList.add('stage-drop-highlight');
+    }
+
+    function onStageDragLeave(event) {
+      event.currentTarget.classList.remove('stage-drop-highlight');
+    }
+
+    function onChecklistDropOnItem(event, targetItemId, targetStage) {
+      event.preventDefault();
+      event.stopPropagation();
+      clearDragVisualStates();
+
+      if (!selectedGameId || !draggedChecklistItemId || draggedChecklistItemId === targetItemId) return;
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (!game) return;
+
+      const fromIndex = game.checklist.findIndex(i => i.id === draggedChecklistItemId);
+      if (fromIndex === -1) return;
+
+      const rect = event.currentTarget.getBoundingClientRect();
+      const insertAfter = (event.clientY - rect.top) > rect.height / 2;
+
+      const [movedItem] = game.checklist.splice(fromIndex, 1);
+      movedItem.stage = targetStage;
+
+      let toIndex = game.checklist.findIndex(i => i.id === targetItemId);
+      if (toIndex === -1) {
+        game.checklist.push(movedItem);
+      } else {
+        if (insertAfter) toIndex += 1;
+        game.checklist.splice(toIndex, 0, movedItem);
+      }
+
+      draggedChecklistItemId = null;
+      saveState();
+      refreshAllUI();
+    }
+
+    function onChecklistDropOnStage(event, targetStage) {
+      event.preventDefault();
+      clearDragVisualStates();
+
+      if (!selectedGameId || !draggedChecklistItemId) return;
+      const game = appState.games.find(g => g.id === selectedGameId);
+      if (!game) return;
+
+      const fromIndex = game.checklist.findIndex(i => i.id === draggedChecklistItemId);
+      if (fromIndex === -1) return;
+
+      const [movedItem] = game.checklist.splice(fromIndex, 1);
+      movedItem.stage = targetStage;
+      game.checklist.push(movedItem);
+
+      draggedChecklistItemId = null;
+      saveState();
+      refreshAllUI();
+    }
+
+    function onChecklistDragEnd() {
+      draggedChecklistItemId = null;
+      clearDragVisualStates();
+    }
+
+    function clearDragVisualStates() {
+      document.querySelectorAll('.checklist-item-dragging, .checklist-drop-above, .checklist-drop-below, .stage-drop-highlight').forEach(el => {
+        el.classList.remove('checklist-item-dragging', 'checklist-drop-above', 'checklist-drop-below', 'stage-drop-highlight');
+      });
     }
 
     function handleAddChecklistItem(event) {
@@ -1484,3 +1691,9 @@
   </script>
 </body>
 </html>
+'''
+
+with open("checklist-transmissoes-v2.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Arquivo checklist-transmissoes-v2.html gerado com sucesso!")
