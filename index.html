@@ -63,15 +63,18 @@
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-950/50 border border-emerald-400/20">
           <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/>
           </svg>
         </div>
         <div>
           <div class="flex flex-wrap items-center gap-2">
             <h1 class="text-base md:text-lg font-bold text-white tracking-tight">Broadcast Ops • Checklists</h1>
-            <span id="autoSaveStatusBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-              ✓ Salvo automaticamente no navegador
-            </span>
+            <button onclick="openDbConfigModal()" id="dbStatusBadge"
+              class="text-[11px] font-semibold px-2.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition inline-flex items-center gap-1.5"
+              title="Clique para configurar banco de dados na nuvem (Supabase) ou gerenciar IndexedDB local">
+              <span id="dbStatusDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span id="dbStatusText">IndexedDB Local Ativo</span>
+            </button>
           </div>
           <p class="text-xs text-slate-400">
             Campos: <span class="text-slate-300 font-medium">Name • Event Date • Open Start • Broadcast • Kick Off • End Game</span>
@@ -80,29 +83,26 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <button onclick="downloadStandaloneHtml()"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition"
-          title="Baixa uma nova cópia deste arquivo HTML já com todas as suas alterações embutidas dentro dele">
+        <button onclick="openDbConfigModal()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/40 transition">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375"/>
           </svg>
-          Salvar Arquivo HTML Atualizado
+          Banco de Dados
+        </button>
+
+        <button onclick="downloadStandaloneHtml()"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 transition"
+          title="Baixa este arquivo HTML já com todos os dados gravados dentro dele">
+          Salvar HTML Portátil
         </button>
 
         <button onclick="exportBackupJson()"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-          title="Exportar cópia de segurança em JSON">
-          <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
-          </svg>
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
           Backup JSON
         </button>
 
-        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition"
-          title="Restaurar arquivo de backup .json">
-          <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
-          </svg>
+        <label class="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
           Restaurar
           <input type="file" accept=".json" onchange="importBackupJson(event)" class="hidden" />
         </label>
@@ -194,7 +194,7 @@
         </div>
 
         <div class="flex items-center gap-2 text-xs text-slate-400">
-          <span>Última movimentação:</span>
+          <span>Última gravação no banco:</span>
           <strong id="lastSyncLabel" class="text-slate-200 font-mono-time">—</strong>
         </div>
       </div>
@@ -410,6 +410,102 @@
     </div>
   </aside>
 
+  <!-- MODAL: CONFIGURAÇÃO DO BANCO DE DADOS (INDEXEDDB + SUPABASE CLOUD) -->
+  <div id="dbConfigModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-bold text-white">Banco de Dados & Sincronização</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Gerencie o banco local estruturado (IndexedDB) ou conecte um banco PostgreSQL na nuvem (Supabase) para compartilhar entre vários computadores.</p>
+        </div>
+        <button onclick="closeDbConfigModal()" class="text-slate-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <!-- CAMADA 1: BANCO LOCAL INDEXEDDB -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-400">1. Banco de Dados Local (IndexedDB) — Ativo</h4>
+          </div>
+          <span id="idbStatsLabel" class="text-[11px] font-mono-time text-slate-400">Conectado</span>
+        </div>
+        <p class="text-xs text-slate-300">
+          Todos os jogos, checklists, modelos de campeonato e histórico são gravados automaticamente em tabelas estruturadas no <strong>IndexedDB</strong> do seu navegador (capacidade dezenas de vezes maior que o localStorage).
+        </p>
+      </div>
+
+      <!-- CAMADA 2: BANCO NA NUVEM (SUPABASE POSTGRESQL) -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span id="cloudDotIndicator" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400">2. Banco de Dados na Nuvem (Supabase / PostgreSQL) — Opcional</h4>
+          </div>
+          <span id="cloudStatusLabel" class="text-[11px] font-semibold text-slate-400">Desconectado (somente local)</span>
+        </div>
+        <p class="text-xs text-slate-300">
+          Quer acessar e editar os mesmos checklists em tempo real de qualquer computador ou celular da equipe? Crie um projeto gratuito no <a href="https://supabase.com" target="_blank" class="text-sky-400 underline">supabase.com</a>, rode o SQL abaixo uma única vez e cole a URL e a Anon Key aqui.
+        </p>
+
+        <details class="bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs">
+          <summary class="cursor-pointer font-semibold text-amber-300 select-none">Ver SQL para criar a tabela no Supabase (1 clique)</summary>
+          <pre class="mt-2 p-2.5 bg-black/50 rounded text-[11px] font-mono-time text-slate-300 overflow-x-auto select-all">create table if not exists public.broadcast_ops_store (
+  id text primary key,
+  payload jsonb not null,
+  updated_at timestamptz default now()
+);
+
+alter table public.broadcast_ops_store enable row level security;
+
+create policy "Acesso publico broadcast_ops"
+on public.broadcast_ops_store
+for all
+using (true)
+with check (true);</pre>
+        </details>
+
+        <div class="grid grid-cols-1 gap-3 pt-1">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Project URL (Supabase)</label>
+            <input id="supabaseUrlInput" type="url" placeholder="https://seu-projeto.supabase.co"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Anon Public Key (Supabase)</label>
+            <input id="supabaseKeyInput" type="password" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">ID da Base / Equipe (para separar ambientes se quiser)</label>
+            <input id="supabaseRoomInput" type="text" value="grade_principal" placeholder="grade_principal"
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-mono-time text-white placeholder-slate-600 focus:outline-none focus:border-sky-500" />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-2">
+          <button type="button" onclick="disconnectSupabase()" class="px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-rose-400 bg-slate-800 border border-slate-700">
+            Desconectar Nuvem
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="pullFromSupabaseManual()" class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30">
+              ↓ Puxar da Nuvem
+            </button>
+            <button type="button" onclick="connectAndSyncSupabase()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white shadow-lg shadow-sky-950/50">
+              Conectar e Sincronizar Agora
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="closeDbConfigModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: CRIAR / EDITAR EVENTO MANUAL (COM AS 6 COLUNAS DA PLANILHA) -->
   <div id="gameFormModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs hidden items-center justify-center p-4">
     <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
@@ -523,9 +619,14 @@
 
   <script>
     // =========================================================
-    // ESTADO E STORAGE (PERSISTÊNCIA DUPLA: LOCALSTORAGE + HTML PORTÁTIL)
+    // CAMADA DE BANCO DE DADOS: INDEXEDDB + SUPABASE CLOUD SYNC
     // =========================================================
-    const STORAGE_KEY = 'broadcast_ops_manual_v6';
+    const IDB_NAME = 'BroadcastOpsDatabase';
+    const IDB_VERSION = 1;
+    const IDB_STORE = 'app_records';
+    const IDB_RECORD_KEY = 'main_state';
+    const LEGACY_LS_KEY = 'broadcast_ops_manual_v6';
+    const CLOUD_CFG_KEY = 'broadcast_ops_cloud_cfg_v1';
 
     const DEFAULT_BLOCKED_KEYWORDS = [
       'show da bundesliga',
@@ -587,10 +688,365 @@
       savedRevision: 0
     };
 
+    let cloudConfig = {
+      url: '',
+      anonKey: '',
+      roomId: 'grade_principal'
+    };
+
+    let idbInstance = null;
     let selectedGameId = null;
     let currentMainTab = 'games';
     let currentAuditFilter = 'ALL';
     let draggedChecklistItemId = null;
+
+    // =========================================================
+    // INDEXEDDB ENGINE
+    // =========================================================
+    function openIndexedDB() {
+      return new Promise((resolve, reject) => {
+        if (!window.indexedDB) {
+          reject(new Error('IndexedDB não suportado neste navegador.'));
+          return;
+        }
+        const request = indexedDB.open(IDB_NAME, IDB_VERSION);
+        request.onupgradeneeded = function(event) {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+          }
+        };
+        request.onsuccess = function(event) {
+          idbInstance = event.target.result;
+          resolve(idbInstance);
+        };
+        request.onerror = function(event) {
+          reject(event.target.error);
+        };
+      });
+    }
+
+    function idbReadState() {
+      return new Promise((resolve, reject) => {
+        if (!idbInstance) return resolve(null);
+        const tx = idbInstance.transaction(IDB_STORE, 'readonly');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.get(IDB_RECORD_KEY);
+        req.onsuccess = () => resolve(req.result ? req.result.data : null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function idbWriteState(stateObj) {
+      return new Promise((resolve, reject) => {
+        if (!idbInstance) return resolve(false);
+        const tx = idbInstance.transaction(IDB_STORE, 'readwrite');
+        const store = tx.objectStore(IDB_STORE);
+        const req = store.put({ id: IDB_RECORD_KEY, data: stateObj, updatedAt: new Date().toISOString() });
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // =========================================================
+    // SUPABASE CLOUD SYNC (OPCIONAL)
+    // =========================================================
+    function loadCloudConfig() {
+      try {
+        const raw = localStorage.getItem(CLOUD_CFG_KEY);
+        if (raw) {
+          cloudConfig = { ...cloudConfig, ...JSON.parse(raw) };
+        }
+      } catch (e) {}
+      updateCloudStatusUI();
+    }
+
+    function saveCloudConfig() {
+      localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify(cloudConfig));
+      updateCloudStatusUI();
+    }
+
+    function isCloudConnected() {
+      return Boolean(cloudConfig.url && cloudConfig.anonKey);
+    }
+
+    function updateCloudStatusUI() {
+      const badgeText = document.getElementById('dbStatusText');
+      const badgeDot = document.getElementById('dbStatusDot');
+      const cloudDot = document.getElementById('cloudDotIndicator');
+      const cloudLabel = document.getElementById('cloudStatusLabel');
+
+      if (isCloudConnected()) {
+        if (badgeText) badgeText.textContent = `Banco Nuvem + IndexedDB (${cloudConfig.roomId || 'grade_principal'})`;
+        if (badgeDot) badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse';
+        if (cloudDot) cloudDot.className = 'w-2 h-2 rounded-full bg-sky-400';
+        if (cloudLabel) {
+          cloudLabel.textContent = 'Conectado ao Supabase';
+          cloudLabel.className = 'text-[11px] font-semibold text-sky-400';
+        }
+      } else {
+        if (badgeText) badgeText.textContent = 'IndexedDB Local Ativo';
+        if (badgeDot) badgeDot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+        if (cloudDot) cloudDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        if (cloudLabel) {
+          cloudLabel.textContent = 'Desconectado (somente local)';
+          cloudLabel.className = 'text-[11px] font-semibold text-slate-400';
+        }
+      }
+    }
+
+    async function pushToSupabase(stateObj) {
+      if (!isCloudConnected()) return false;
+      const baseUrl = cloudConfig.url.replace(/\/$/, '');
+      const room = encodeURIComponent(cloudConfig.roomId || 'grade_principal');
+      const resp = await fetch(`${baseUrl}/rest/v1/broadcast_ops_store?on_conflict=id`, {
+        method: 'POST',
+        headers: {
+          'apikey': cloudConfig.anonKey,
+          'Authorization': `Bearer ${cloudConfig.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates,return=minimal'
+        },
+        body: JSON.stringify({
+          id: decodeURIComponent(room),
+          payload: stateObj,
+          updated_at: new Date().toISOString()
+        })
+      });
+      if (!resp.ok) {
+        const errTxt = await resp.text();
+        throw new Error(`Supabase (${resp.status}): ${errTxt}`);
+      }
+      return true;
+    }
+
+    async function fetchFromSupabase() {
+      if (!isCloudConnected()) return null;
+      const baseUrl = cloudConfig.url.replace(/\/$/, '');
+      const room = encodeURIComponent(cloudConfig.roomId || 'grade_principal');
+      const resp = await fetch(`${baseUrl}/rest/v1/broadcast_ops_store?id=eq.${room}&select=payload`, {
+        method: 'GET',
+        headers: {
+          'apikey': cloudConfig.anonKey,
+          'Authorization': `Bearer ${cloudConfig.anonKey}`
+        }
+      });
+      if (!resp.ok) {
+        const errTxt = await resp.text();
+        throw new Error(`Supabase (${resp.status}): ${errTxt}`);
+      }
+      const rows = await resp.json();
+      if (Array.isArray(rows) && rows.length > 0 && rows[0].payload) {
+        return rows[0].payload;
+      }
+      return null;
+    }
+
+    async function connectAndSyncSupabase() {
+      const url = document.getElementById('supabaseUrlInput').value.trim();
+      const anonKey = document.getElementById('supabaseKeyInput').value.trim();
+      const roomId = document.getElementById('supabaseRoomInput').value.trim() || 'grade_principal';
+
+      if (!url || !anonKey) {
+        alert('Preencha a Project URL e a Anon Public Key do Supabase.');
+        return;
+      }
+
+      cloudConfig = { url, anonKey, roomId };
+      saveCloudConfig();
+
+      try {
+        const remoteState = await fetchFromSupabase();
+        if (remoteState && (remoteState.savedRevision || 0) > (appState.savedRevision || 0)) {
+          appState = { ...appState, ...remoteState };
+          await idbWriteState(appState);
+          refreshAllUI();
+          alert('Conectado com sucesso! Dados mais recentes da nuvem foram carregados.');
+        } else {
+          await pushToSupabase(appState);
+          alert('Conectado com sucesso! Seus dados locais foram enviados para o banco na nuvem.');
+        }
+      } catch (err) {
+        alert('Erro ao conectar no Supabase. Verifique a URL, a Key e se a tabela broadcast_ops_store foi criada:\n\n' + err.message);
+      }
+    }
+
+    async function pullFromSupabaseManual() {
+      if (!isCloudConnected()) {
+        alert('Configure a URL e a Key do Supabase primeiro.');
+        return;
+      }
+      try {
+        const remoteState = await fetchFromSupabase();
+        if (!remoteState) {
+          alert('Nenhum registro encontrado na nuvem para este ID de Base ainda.');
+          return;
+        }
+        appState = { ...appState, ...remoteState };
+        await idbWriteState(appState);
+        refreshAllUI();
+        alert('Dados atualizados a partir do banco na nuvem!');
+      } catch (err) {
+        alert('Falha ao buscar dados da nuvem: ' + err.message);
+      }
+    }
+
+    function disconnectSupabase() {
+      cloudConfig = { url: '', anonKey: '', roomId: 'grade_principal' };
+      saveCloudConfig();
+      document.getElementById('supabaseUrlInput').value = '';
+      document.getElementById('supabaseKeyInput').value = '';
+      alert('Banco na nuvem desconectado. O sistema continua salvando normalmente no IndexedDB local.');
+    }
+
+    function openDbConfigModal() {
+      document.getElementById('supabaseUrlInput').value = cloudConfig.url || '';
+      document.getElementById('supabaseKeyInput').value = cloudConfig.anonKey || '';
+      document.getElementById('supabaseRoomInput').value = cloudConfig.roomId || 'grade_principal';
+      document.getElementById('idbStatsLabel').textContent = `${appState.games.length} jogos • ${appState.auditLogs.length} logs`;
+      updateCloudStatusUI();
+
+      const modal = document.getElementById('dbConfigModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDbConfigModal() {
+      const modal = document.getElementById('dbConfigModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // =========================================================
+    // PERSISTÊNCIA UNIFICADA (INDEXEDDB + CLOUD + FALLBACK)
+    // =========================================================
+    async function saveState() {
+      appState.savedRevision = (appState.savedRevision || 0) + 1;
+      try {
+        await idbWriteState(appState);
+      } catch (e) {
+        console.warn('Fallback localStorage:', e);
+      }
+      try {
+        localStorage.setItem(LEGACY_LS_KEY, JSON.stringify(appState));
+      } catch (e) {}
+
+      const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const badgeText = document.getElementById('dbStatusText');
+
+      if (isCloudConnected()) {
+        if (badgeText) badgeText.textContent = 'Sincronizando nuvem...';
+        pushToSupabase(appState)
+          .then(() => {
+            if (badgeText) badgeText.textContent = `✓ Nuvem + IndexedDB (${timeStr})`;
+          })
+          .catch(() => {
+            if (badgeText) badgeText.textContent = `⚠ Salvo local • Erro nuvem (${timeStr})`;
+          });
+      } else {
+        if (badgeText) badgeText.textContent = `✓ IndexedDB Salvo (${timeStr})`;
+      }
+    }
+
+    async function loadState() {
+      loadCloudConfig();
+
+      try {
+        await openIndexedDB();
+      } catch (e) {
+        console.warn('IndexedDB indisponível, usando localStorage:', e);
+      }
+
+      let embedded = null;
+      const embeddedEl = document.getElementById('embeddedStateData');
+      if (embeddedEl && embeddedEl.textContent.trim() && embeddedEl.textContent.trim() !== 'null') {
+        try { embedded = JSON.parse(embeddedEl.textContent); } catch (e) {}
+      }
+
+      let idbData = null;
+      try { idbData = await idbReadState(); } catch (e) {}
+
+      let lsData = null;
+      try {
+        const raw = localStorage.getItem(LEGACY_LS_KEY);
+        if (raw) lsData = JSON.parse(raw);
+      } catch (e) {}
+
+      let cloudData = null;
+      if (isCloudConnected()) {
+        try { cloudData = await fetchFromSupabase(); } catch (e) {}
+      }
+
+      // Escolhe a fonte com maior savedRevision
+      const candidates = [embedded, idbData, lsData, cloudData].filter(Boolean);
+      if (candidates.length > 0) {
+        candidates.sort((a, b) => (b.savedRevision || 0) - (a.savedRevision || 0));
+        appState = { ...appState, ...candidates[0] };
+        await idbWriteState(appState);
+        return;
+      }
+
+      // Carga inicial com exemplos
+      const ts = nowFormatted();
+      INITIAL_SAMPLE_GAMES.forEach(item => {
+        const league = detectLeague(item.name);
+        const tpl = appState.templates[league] || appState.templates['Padrão Futebol'] || [];
+        appState.games.push({
+          id: 'game_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          name: item.name,
+          league,
+          eventDate: item.eventDate,
+          openStart: item.openStart,
+          broadcast: item.broadcast,
+          kickOff: item.kickOff,
+          endGame: item.endGame,
+          status: 'ACTIVE',
+          changeFlag: 'NONE',
+          lastChangeSummary: '',
+          createdAt: ts,
+          updatedAt: null,
+          removedAt: null,
+          checklist: tpl.map((t, idx) => ({
+            id: 'chk_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
+            stage: t.stage,
+            text: t.text,
+            done: false,
+            doneAt: null
+          }))
+        });
+      });
+      appState.lastMovement = ts;
+      await saveState();
+    }
+
+    function downloadStandaloneHtml() {
+      const cloneDoc = document.documentElement.cloneNode(true);
+      const drawer = cloneDoc.querySelector('#checklistDrawer');
+      const backdrop = cloneDoc.querySelector('#checklistDrawerBackdrop');
+      const formModal = cloneDoc.querySelector('#gameFormModal');
+      const filterModal = cloneDoc.querySelector('#filterRulesModal');
+      const dbModal = cloneDoc.querySelector('#dbConfigModal');
+
+      if (drawer) { drawer.classList.add('hidden'); drawer.classList.remove('flex'); }
+      if (backdrop) backdrop.classList.add('hidden');
+      if (formModal) { formModal.classList.add('hidden'); formModal.classList.remove('flex'); }
+      if (filterModal) { filterModal.classList.add('hidden'); filterModal.classList.remove('flex'); }
+      if (dbModal) { dbModal.classList.add('hidden'); dbModal.classList.remove('flex'); }
+
+      const dataScript = cloneDoc.querySelector('#embeddedStateData');
+      if (dataScript) {
+        dataScript.textContent = JSON.stringify(appState);
+      }
+
+      const fullHtml = '<!DOCTYPE html>\n' + cloneDoc.outerHTML;
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `checklist-transmissoes-db-${new Date().toISOString().slice(0, 10)}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
 
     // =========================================================
     // UTILITÁRIOS
@@ -631,116 +1087,6 @@
       }
 
       return { ok: true };
-    }
-
-    // =========================================================
-    // PERSISTÊNCIA AUTOMÁTICA + EXPORTAÇÃO HTML AUTOCONTIDO
-    // =========================================================
-    function saveState() {
-      appState.savedRevision = (appState.savedRevision || 0) + 1;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      } catch (e) {
-        console.warn('Não foi possível salvar no localStorage:', e);
-      }
-      const badge = document.getElementById('autoSaveStatusBadge');
-      if (badge) {
-        const timeStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        badge.textContent = `✓ Alterações salvas (${timeStr})`;
-      }
-    }
-
-    function loadState() {
-      let embedded = null;
-      const embeddedEl = document.getElementById('embeddedStateData');
-      if (embeddedEl && embeddedEl.textContent.trim() && embeddedEl.textContent.trim() !== 'null') {
-        try {
-          embedded = JSON.parse(embeddedEl.textContent);
-        } catch (e) {
-          console.error('Erro ao ler dados embutidos no HTML:', e);
-        }
-      }
-
-      let local = null;
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) local = JSON.parse(saved);
-      } catch (e) {
-        console.error('Erro ao ler localStorage:', e);
-      }
-
-      if (embedded && local) {
-        appState = (embedded.savedRevision || 0) >= (local.savedRevision || 0)
-          ? { ...appState, ...embedded }
-          : { ...appState, ...local };
-        saveState();
-        return;
-      } else if (embedded) {
-        appState = { ...appState, ...embedded };
-        saveState();
-        return;
-      } else if (local) {
-        appState = { ...appState, ...local };
-        return;
-      }
-
-      const ts = nowFormatted();
-      INITIAL_SAMPLE_GAMES.forEach(item => {
-        const league = detectLeague(item.name);
-        const tpl = appState.templates[league] || appState.templates['Padrão Futebol'] || [];
-        appState.games.push({
-          id: 'game_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-          name: item.name,
-          league,
-          eventDate: item.eventDate,
-          openStart: item.openStart,
-          broadcast: item.broadcast,
-          kickOff: item.kickOff,
-          endGame: item.endGame,
-          status: 'ACTIVE',
-          changeFlag: 'NONE',
-          lastChangeSummary: '',
-          createdAt: ts,
-          updatedAt: null,
-          removedAt: null,
-          checklist: tpl.map((t, idx) => ({
-            id: 'chk_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).slice(2, 5),
-            stage: t.stage,
-            text: t.text,
-            done: false,
-            doneAt: null
-          }))
-        });
-      });
-      appState.lastMovement = ts;
-      saveState();
-    }
-
-    function downloadStandaloneHtml() {
-      const cloneDoc = document.documentElement.cloneNode(true);
-      const drawer = cloneDoc.querySelector('#checklistDrawer');
-      const backdrop = cloneDoc.querySelector('#checklistDrawerBackdrop');
-      const formModal = cloneDoc.querySelector('#gameFormModal');
-      const filterModal = cloneDoc.querySelector('#filterRulesModal');
-
-      if (drawer) { drawer.classList.add('hidden'); drawer.classList.remove('flex'); }
-      if (backdrop) backdrop.classList.add('hidden');
-      if (formModal) { formModal.classList.add('hidden'); formModal.classList.remove('flex'); }
-      if (filterModal) { filterModal.classList.add('hidden'); filterModal.classList.remove('flex'); }
-
-      const dataScript = cloneDoc.querySelector('#embeddedStateData');
-      if (dataScript) {
-        dataScript.textContent = JSON.stringify(appState);
-      }
-
-      const fullHtml = '<!DOCTYPE html>\n' + cloneDoc.outerHTML;
-      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `checklist-transmissoes-${new Date().toISOString().slice(0, 10)}.html`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
 
     // =========================================================
@@ -1266,26 +1612,22 @@
         remWrap.classList.add('hidden');
       }
 
-      // Progresso
       const total = game.checklist.length;
       const done = game.checklist.filter(i => i.done).length;
       const pct = total > 0 ? Math.round((done / total) * 100) : 0;
       document.getElementById('drawerProgressText').textContent = `${done}/${total} (${pct}%)`;
       document.getElementById('drawerProgressBar').style.width = `${pct}%`;
 
-      // Select de Modelos de Campeonato
       const tplSelect = document.getElementById('applyTemplateSelect');
       const tplKeys = Object.keys(appState.templates);
       tplSelect.innerHTML = '<option value="">Puxar modelo campeonato...</option>' +
         tplKeys.map(k => `<option value="${k}" ${k === game.league ? 'selected' : ''}>Modelo: ${k} (${appState.templates[k].length} itens)</option>`).join('');
 
-      // Select de Jogos Existentes para Clonar
       const cloneSelect = document.getElementById('cloneGameSelect');
       const otherGames = appState.games.filter(g => g.id !== game.id && g.checklist.length > 0);
       cloneSelect.innerHTML = '<option value="">Copiar de outro jogo...</option>' +
         otherGames.map(g => `<option value="${g.id}">${g.name} (${g.checklist.length} itens)</option>`).join('');
 
-      // Lista agrupada por Etapa (com suporte a arrastar e soltar)
       const container = document.getElementById('drawerChecklistContainer');
       if (game.checklist.length === 0) {
         container.innerHTML = `
@@ -1349,7 +1691,6 @@
       }).join('');
     }
 
-    // Handlers de Drag & Drop
     function onChecklistDragStart(event, itemId) {
       draggedChecklistItemId = itemId;
       event.dataTransfer.effectAllowed = 'move';
@@ -1685,9 +2026,11 @@
       reader.readAsText(file);
     }
 
-    // Boot
-    loadState();
-    refreshAllUI();
+    // Boot Assíncrono (IndexedDB + Cloud Sync)
+    (async function initApp() {
+      await loadState();
+      refreshAllUI();
+    })();
   </script>
 </body>
 </html>
